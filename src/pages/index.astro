@@ -1,0 +1,521 @@
+---
+import Site from '../layouts/Site.astro';
+import Term from '../components/Term.astro';
+import agent from '../data/agent-setup.json';
+import { release, installCommands } from '../lib/site';
+import { facts, head, run, commits, line, output, transcript, type Verdict } from '../lib/demo';
+
+const short = (sha: string) => sha.slice(0, 12);
+const sym: Record<Verdict, string> = { verified: '■', stale: '▨', unconfirmed: '□', tampered: '▩' };
+const cls: Record<Verdict, string> = { verified: 'k-ok', stale: 'k-st', unconfirmed: 'k-un', tampered: 'k-bad' };
+
+// ---- fig. 1: the recorded session, three states
+const run1 = run('03-run');
+const run2 = run('09-run');
+const [c1, c2, c3] = commits();
+const rerun = line('07-text-stale', /^Rerun: /).match(/「(.*?)」/)?.[1] ?? '';
+const reaffirmed = line('10-reaffirm', /^memprove: reaffirmed \d+/).replace(/^memprove: /, '');
+const frames = [
+  { head: head('05-text-verified'), facts: facts('05-text-verified') },
+  { head: head('07-text-stale'), facts: facts('07-text-stale') },
+  { head: head('11-text-reverified'), facts: facts('11-text-reverified') },
+];
+const events = [
+  `memprove run · ${run1.label} ${run1.status} · ${run1.cases} test cases at ${short(frames[0].head)}`,
+  `git commit ${short(c3.sha)} · "${c3.subject}"`,
+  `${frames[1].facts.length} facts stale · Rerun: 「${rerun}」`,
+  `memprove run · ${run2.label} ${run2.status} · ${run2.cases} test cases · ${reaffirmed}`,
+];
+const eventsOn = [1, 3, 4]; // how many events each frame shows
+const count = (f: (typeof frames)[number]) => {
+  const n = (v: Verdict) => f.facts.filter((x) => x.verdict === v).length;
+  const parts = [`${f.facts.length} facts`, `${n('verified')} verified`, `${n('stale')} stale`];
+  return parts.join(' · ');
+};
+const fig1 = frames.map((f, i) => ({
+  head: short(f.head),
+  stale: f.facts.some((x) => x.verdict === 'stale'),
+  count: count(f),
+  on: eventsOn[i],
+  facts: f.facts.map((x, j) => ({
+    sym: sym[x.verdict],
+    cls: cls[x.verdict],
+    word: x.verdict,
+    meta: `#${x.n} · ${x.verdict} · bound to ${x.commit}${i === 2 ? ` · reaffirms #${frames[0].facts[j].n}` : ''}`,
+  })),
+}));
+const still = fig1[1]; // the frame shown without JavaScript or with reduced motion
+const factTexts = frames[0].facts.map((x) => x.text);
+
+// ---- hero: install and init
+const initLines = [line('01-init', /^clients: /), line('01-init', /\.mcp\.json written$/), line('01-init', /^memprove doctor: /)];
+
+// ---- fig. 5: the Pack the hook gave Session 2
+const hook = transcript('07-hook-stale').split('\n');
+const packStart = hook.indexOf('```text') + 1;
+const pack = hook.slice(packStart, hook.indexOf('```', packStart));
+const pick: { re: RegExp; note?: string }[] = [
+  { re: /^Task「/, note: '① the Task and its verdict' },
+  { re: /^Sessions: /, note: '② who worked on it' },
+  { re: /^Session 1 / },
+  { re: /^Cannot: complete/ },
+  { re: /^Base: /, note: '③ what changed since the run' },
+  { re: /^#1 fact stale/ },
+  { re: /^Rerun: /, note: '④ what to run again' },
+  { re: /^#6 next action/ },
+  { re: /^Digest: /, note: '⑤ SHA-256 of the lines above' },
+];
+const packRows: { n: string; text: string; note?: string; gap?: boolean }[] = [];
+let last = -1;
+for (const p of pick) {
+  const i = pack.findIndex((l) => p.re.test(l));
+  if (i < 0) throw new Error(`the recorded Pack has no line matching ${p.re}`);
+  if (i > last + 1) packRows.push({ n: '', text: '⋮', gap: true });
+  packRows.push({ n: String(i + 1).padStart(2, '0'), text: pack[i], note: p.note });
+  last = i;
+}
+
+// ---- local by design: real doctor and ledger lines
+const doctorLines = ['socket:', 'daemon:', 'token-file:', 'config-dir:'].map((k) => line('01-init', new RegExp(`^PASS ${k}`)));
+const ledger = JSON.parse(output('12-ledger')[0]);
+
+// ---- closing logo
+const logo = [
+  '███╗   ███╗███████╗███╗   ███╗██████╗ ██████╗  ██████╗ ██╗   ██╗███████╗',
+  '████╗ ████║██╔════╝████╗ ████║██╔══██╗██╔══██╗██╔═══██╗██║   ██║██╔════╝',
+  '██╔████╔██║█████╗  ██╔████╔██║██████╔╝██████╔╝██║   ██║██║   ██║█████╗  ',
+  '██║╚██╔╝██║██╔══╝  ██║╚██╔╝██║██╔═══╝ ██╔══██╗██║   ██║╚██╗ ██╔╝██╔══╝  ',
+  '██║ ╚═╝ ██║███████╗██║ ╚═╝ ██║██║     ██║  ██║╚██████╔╝ ╚████╔╝ ███████╗',
+  '╚═╝     ╚═╝╚══════╝╚═╝     ╚═╝╚═╝     ╚═╝  ╚═╝ ╚═════╝   ╚═══╝  ╚══════╝',
+];
+
+const ld = {
+  '@context': 'https://schema.org',
+  '@type': 'SoftwareApplication',
+  name: 'memprove',
+  applicationCategory: 'DeveloperApplication',
+  operatingSystem: 'macOS, Linux',
+  softwareVersion: release.version,
+  license: 'https://www.apache.org/licenses/LICENSE-2.0',
+  url: 'https://memprove.dev/',
+  downloadUrl: `https://github.com/memprove/memprove/releases/tag/${release.tag}`,
+  codeRepository: 'https://github.com/memprove/memprove',
+  offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
+  description:
+    'A memory and task-state layer for coding agents: facts bound to commits and test runs, judged by a deterministic rule.',
+};
+---
+
+<Site
+  title="memprove: agent memory that is checked, not trusted"
+  description="memprove binds every fact your coding agent records to a commit, the worktree and a passing test run. When the code moves, the fact turns stale, decided by a rule, not a model."
+  current="home"
+>
+  <script type="application/ld+json" slot="head" set:html={JSON.stringify(ld)} />
+
+  <!-- 2 · hero, 3 · fig. 1 -->
+  <section style="padding: clamp(56px, 8vw, 88px) 0 clamp(64px, 9vw, 96px)">
+    <div class="wrap two top">
+      <div class="stack" style="gap: 24px">
+        <p class="cap">[ v{release.version} · open source · rust · apache-2.0 ]</p>
+        <h1 class="hero">Agent memory that is checked, not trusted.</h1>
+        <p class="lead">
+          memprove binds every fact your coding agent records to a commit, the worktree and a passing test run. When the
+          code moves, the fact turns stale — decided by a rule, not a model.
+        </p>
+
+        <Term title="~/tinyini" id="install">
+          <div class="tabs" role="tablist" aria-label="Install for" slot="head">
+            <button type="button" class="tab" role="tab" id="tab-macos" aria-controls="pane-macos" aria-selected="true">macos</button>
+            <button type="button" class="tab" role="tab" id="tab-linux" aria-controls="pane-linux" aria-selected="false" tabindex="-1">linux</button>
+            <button type="button" class="tab" role="tab" id="tab-source" aria-controls="pane-source" aria-selected="false" tabindex="-1">source</button>
+          </div>
+          <div class="tbody">
+            {
+              (['macos', 'linux', 'source'] as const).map((os) => (
+                <div class="pane" role="tabpanel" id={`pane-${os}`} aria-labelledby={`tab-${os}`} hidden={os !== 'macos'}>
+                  <div class="ln pane-label"># {os === 'source' ? 'from source (Rust 1.96, libclang)' : release.targets[os].label}</div>
+                  {installCommands[os].map((c) => (
+                    <div class="ln hang"><span class="glow">$</span> {c}</div>
+                  ))}
+                </div>
+              ))
+            }
+            <div class="ln" style="margin-top: 10px"><span class="glow">❯</span> <span id="typed-init" data-text="memprove init">memprove init</span><span class="cur"></span></div>
+            {initLines.map((l) => <div class="ln dim step init-out">{l}</div>)}
+            <div class="ln hang dim" style="margin-top: 6px"># or tell your agent: "read memprove.dev/llms.txt and set it up here"</div>
+          </div>
+        </Term>
+
+        <div class="btns">
+          <a class="btn" href="/docs/">Read the quickstart</a>
+          <a class="btn2" href="https://github.com/memprove/memprove">View on GitHub</a>
+        </div>
+        <p style="margin: 0; font-size: 14px; color: var(--mp-muted)">
+          Works with <span style="color: var(--mp-fg); font-weight: 500">Claude Code</span> ·
+          <span style="color: var(--mp-fg); font-weight: 500">Codex</span> ·
+          <span style="color: var(--mp-fg); font-weight: 500">Cursor</span>
+        </p>
+      </div>
+
+      <div class="stack" style="gap: 14px">
+        <figure class="panel" style="margin: 0" id="fig1" aria-labelledby="fig1-cap">
+          <div class="phead">
+            <span id="fig1-cap">[ fig. 1 — four facts in tinyini, a real session · replayed ]</span>
+            <span>HEAD <span class={`head-chip ${still.stale ? 'k-st' : ''}`} data-head>{still.head}</span></span>
+          </div>
+          <div class="pbody">
+            <ol class="facts" aria-live="off">
+              {
+                factTexts.map((t, j) => (
+                  <li class="fact" data-fact={j}>
+                    <span class={`sq ${still.facts[j].cls}`} aria-hidden="true" data-sym>{still.facts[j].sym}</span>
+                    <div>
+                      <div class="fact-text">{t}</div>
+                      <div class="fact-meta" data-meta>{still.facts[j].meta}</div>
+                    </div>
+                  </li>
+                ))
+              }
+            </ol>
+            <div class="legend" aria-hidden="true">
+              <span><span class="k-ok">■</span> verified</span>
+              <span><span class="k-st">▨</span> stale</span>
+              <span><span class="k-un">□</span> unconfirmed</span>
+              <span><span class="k-bad">▩</span> tampered</span>
+              <span class="count" data-count>{still.count}</span>
+            </div>
+            <ol class="events">
+              {events.map((e, i) => <li class={`ev ${i < still.on ? 'on' : ''}`} data-ev={i} title={e}><span class="num">›</span> {e}</li>)}
+            </ol>
+          </div>
+        </figure>
+        <p class="cap" style="font-size: 12px">
+          Recorded with memprove {release.version} and pytest by <a href="https://github.com/memprove/memprove.github.io/blob/main/demo/record.sh">demo/record.sh</a>.
+          Nobody edits a fact: a commit moves HEAD, the rule re-judges each one, a passing rerun brings them back.
+          <a href="/how-it-works/">The full output →</a>
+        </p>
+      </div>
+    </div>
+    <script type="application/json" id="fig1-data" set:html={JSON.stringify({ frames: fig1 })} />
+  </section>
+
+  <!-- 4 · problem -->
+  <section class="sec">
+    <div class="wrap two">
+      <div class="stack">
+        <p class="cap">[ 01 · the problem ]</p>
+        <h2 class="h2">Notes don't know when they stop being true.</h2>
+        <p class="txt">
+          A line in <span class="code">CLAUDE.md</span> says the parser handles empty input. Three commits later it doesn't, and
+          your agent still believes it. Memory files, auto-memory and hosted memory layers merge and expire text by timestamps
+          and wording. None of them checks whether the code still passes.
+        </p>
+      </div>
+      <figure class="panel" style="margin: 0">
+        <div class="phead"><span>[ fig. 2 — CLAUDE.md, three commits later ]</span><span>no checks</span></div>
+        <div class="lines" style="font-size: 13.5px; line-height: 2">
+          <span class="num">01</span><span style="color: var(--mp-muted)">## Parser</span>
+          <span class="num">02</span><span class="stale-line"><span>- The parser handles empty input.</span><span class="k-st" style="font-size: 12px">▨ true three commits ago · nobody re-checked</span></span>
+          <span class="num">03</span><span>- Run the tests before committing.</span>
+          <span class="num">04</span><span>- The public API lives in tinyini/__init__.py.</span>
+        </div>
+      </figure>
+    </div>
+  </section>
+
+  <!-- 5 · how it works -->
+  <section class="sec" id="how">
+    <div class="wrap" style="display: flex; flex-direction: column; gap: 40px">
+      <div class="stack" style="max-width: 44em">
+        <p class="cap">[ 02 · how it works ]</p>
+        <h2 class="h2">Three steps. No model in the loop.</h2>
+      </div>
+      <div class="grid3">
+        <div class="panel">
+          <div class="phead"><span class="k-ok">01 · run</span><span>→ 02</span></div>
+          <div class="pbody">
+            <code class="cmd">memprove run --test-format pytest -- python3 -m pytest -q</code>
+            <p class="txt sm">Runs the tests in your shell and records the exit code, the case count and the exact repository state: HEAD, the index, the worktree.</p>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="phead"><span class="k-ok">02 · record</span><span>→ 03</span></div>
+          <div class="pbody">
+            <code class="cmd">memprove checkpoint create --fact "…" --evidence r1</code>
+            <p class="txt sm">Binds the fact to that run. A fact needs a passed test run; a failure can only be recorded as an open item.</p>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="phead"><span class="k-ok">03 · re-judge on every read</span><span>↺</span></div>
+          <div class="pbody">
+            <code class="cmd">memprove resume --pack</code>
+            <p class="txt sm">Each read compares the run's state with the repository now. A fixed rule decides; no model is asked.</p>
+          </div>
+        </div>
+      </div>
+      <figure class="panel" style="margin: 0">
+        <div class="phead"><span>[ fig. 3 — the four verdicts ]</span><span>always shown with their word</span></div>
+        <div class="verdicts">
+          <div class="verdict">
+            <span class="vword k-ok"><span class="s">■</span> verified</span>
+            <p class="txt sm">A passed run of the current state backs the fact.</p>
+          </div>
+          <div class="verdict">
+            <span class="vword k-st"><span class="s">▨</span> stale</span>
+            <p class="txt sm">The repository moved since that run. The Pack names the command to run again.</p>
+          </div>
+          <div class="verdict">
+            <span class="vword k-un"><span class="s">□</span> unconfirmed</span>
+            <p class="txt sm">The evidence can't answer for this state, for example a later run of the same command failed.</p>
+          </div>
+          <div class="verdict">
+            <span class="vword k-bad"><span class="s">▩</span> tampered</span>
+            <p class="txt sm">The ledger changed behind the daemon's back. The word "verified" appears nowhere.</p>
+          </div>
+        </div>
+      </figure>
+    </div>
+  </section>
+
+  <!-- 6 · no integration project -->
+  <section class="sec">
+    <div class="wrap two">
+      <div class="stack">
+        <p class="cap">[ 03 · no integration project ]</p>
+        <h2 class="h2">Your agent does the integration.</h2>
+        <p class="txt">
+          Enterprise platforms send a solutions architect to wire memory into your stack. memprove ships instructions instead:
+          <a class="code" href="/llms.txt">memprove.dev/llms.txt</a> tells a coding agent how to install it, run
+          <span class="code">memprove init</span> and record a first test run. Setup happens in the session you already work in,
+          and you review what it changed.
+        </p>
+        <ul class="list">
+          <li><span class="k-ok">■</span> one prompt, in the agent you already use</li>
+          <li><span class="k-ok">■</span> no account to create, no SDK to call</li>
+          <li><span class="k-ok">■</span> run init again and nothing changes</li>
+        </ul>
+      </div>
+      <div class="stack" style="gap: 10px">
+        <Term title={`${agent.client} — ~/your-repo`} id="agent" label="fig. 4: an agent setting memprove up from llms.txt">
+          <span slot="head">[ fig. 4 · {agent.recorded ? 'recorded' : 'mock-up'} ]</span>
+          <div class="tbody" style="line-height: 1.85">
+            <div class="ln hang"><span class="glow">❯</span> <span id="typed-ask" data-text={agent.prompt}>{agent.prompt}</span><span class="cur" id="ask-cur"></span></div>
+            {
+              agent.lines.map((l, i) => (
+                <div class={`wrapline step agent-out ${l.kind === 'dim' ? 'dim' : ''}`} style={i === 0 ? 'margin-top: 8px' : undefined}>{l.kind === 'ok' ? <><span class="glow">[  OK  ]</span> {l.text}</> : l.text}</div>
+              ))
+            }
+          </div>
+        </Term>
+        <p class="cap" style="font-size: 12px">
+          {agent.recorded ? 'Recorded in a real session.' : 'A mock-up: the setup through llms.txt is being recorded in Claude Code, Codex and Cursor.'}
+          <a href="/llms.txt">Read llms.txt →</a>
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 7 · context pack -->
+  <section class="sec">
+    <div class="wrap" style="display: flex; flex-direction: column; gap: 28px">
+      <div class="two top">
+        <div class="stack">
+          <p class="cap">[ 04 · context pack ]</p>
+          <h2 class="h2">What the next session reads.</h2>
+        </div>
+        <div class="stack">
+          <p class="txt">
+            In Claude Code, a hook puts a Context Pack at the start of every session: the Task, who worked on it, the last passed
+            run, every active fact with its verdict and commit, the open items and the next action. Same ledger, same repository,
+            same budget: same bytes.
+          </p>
+          <ul class="list muted">
+            <li>— fits a budget, 9,000 UTF-16 units by default; the next action is never cut</li>
+            <li>— agent-written text is quoted, so a statement can't forge a line</li>
+            <li>— the last line is a SHA-256 digest of everything above it</li>
+          </ul>
+        </div>
+      </div>
+      <figure class="panel" style="margin: 0">
+        <div class="phead"><span>[ fig. 5 — the Pack Session 2 got from the hook · excerpt ]</span><span>{pack.length} lines</span></div>
+        <div class="lines notes" style="font-size: 12.5px; line-height: 1.7">
+          {
+            packRows.map((r) =>
+              r.gap ? (
+                <>
+                  <span class="num"></span>
+                  <span class="l gap">⋮</span>
+                  <span class="note"></span>
+                </>
+              ) : (
+                <>
+                  <span class="num">{r.n}</span>
+                  <span class="l" set:html={r.text
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/\b(stale)\b/g, '<span class="k-st">$1</span>')} />
+                  <span class="note">{r.note ?? ''}</span>
+                </>
+              ),
+            )
+          }
+        </div>
+      </figure>
+    </div>
+  </section>
+
+  <!-- 8 · hand-offs -->
+  <section class="sec">
+    <div class="wrap two">
+      <div class="stack">
+        <p class="cap">[ 05 · hand-offs ]</p>
+        <h2 class="h2">Built for more than one agent.</h2>
+        <p class="txt">
+          Sessions end, crash, or get handed to sub-agents. A Pack lists every Session that hasn't ended, memprove records who
+          ended whom, and a sub-agent can't record a Decision, complete the Task or overrule another agent's facts.
+        </p>
+        <a class="more" href="/docs/guide/unattended-takeover/">How a takeover works →</a>
+      </div>
+      <figure class="panel" style="margin: 0">
+        <div class="phead"><span>[ fig. 6 — when a session may end another as abandoned ]</span><span>all three must hold</span></div>
+        <dl class="rule">
+          <dt>A</dt><dd><span class="k-ok">■</span> Its agent is not you.</dd>
+          <dt>B</dt><dd><span class="k-ok">■</span> It looks gone: no write for 15 minutes, or the Session that dispatched it has ended.</dd>
+          <dt>C</dt><dd><span class="k-ok">■</span> It is not your own parent.</dd>
+        </dl>
+        <div class="pfoot">A ∧ B ∧ C → ended as abandoned<br />otherwise → it stays open, and the first checkpoint records that another Session may still be working</div>
+      </figure>
+    </div>
+  </section>
+
+  <!-- 9 · integrations -->
+  <section class="sec">
+    <div class="wrap" style="display: flex; flex-direction: column; gap: 32px">
+      <div class="stack" style="max-width: 44em">
+        <p class="cap">[ 06 · integrations ]</p>
+        <h2 class="h2">One command per repository.</h2>
+        <p class="txt"><span class="code">memprove init</span> finds the clients you use and writes what each needs. Running it again changes nothing.</p>
+      </div>
+      <div class="grid3">
+        <div class="panel">
+          <div class="phead"><span>claude code</span><span>hook + mcp</span></div>
+          <div class="pbody" style="gap: 12px">
+            <p class="txt sm">A SessionStart hook injects the Pack; the MCP server does what the commands do.</p>
+            <p class="cap">.claude/settings.local.json · .mcp.json</p>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="phead"><span>codex</span><span>mcp + note</span></div>
+          <div class="pbody" style="gap: 12px">
+            <p class="txt sm">An MCP server entry, plus a short note in AGENTS.md.</p>
+            <p class="cap">~/.codex/config.toml · AGENTS.md</p>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="phead"><span>cursor</span><span>mcp + rule</span></div>
+          <div class="pbody" style="gap: 12px">
+            <p class="txt sm">An MCP server entry, plus a rule.</p>
+            <p class="cap">.cursor/mcp.json · .cursor/rules/memprove.mdc</p>
+          </div>
+        </div>
+      </div>
+      <div class="chips">
+        <span class="cap" style="margin-right: 6px">[ ten mcp tools ]</span>
+        <span class="chip">pack</span><span class="chip">claims</span><span class="chip">context</span><span class="chip">tasks</span><span class="chip">ledger_verify</span>
+        <span class="chip w">begin</span><span class="chip w">checkpoint</span><span class="chip w">decide</span><span class="chip w">end</span><span class="chip w">complete</span>
+        <span style="flex-basis: 100%; font-size: 14px; color: var(--mp-muted)">Read tools in grey, write tools in green. No tool runs commands: tests always go through <span class="code">memprove run</span> in your shell.</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- 10 · local by design -->
+  <section class="sec">
+    <div class="wrap two">
+      <div class="stack">
+        <p class="cap">[ 07 · local by design ]</p>
+        <h2 class="h2">Nothing leaves your machine.</h2>
+        <p class="txt">The daemon, the ledger and the tokens all live on your computer. There is no hosted service to sign up for and nothing to send home.</p>
+        <ul class="list muted">
+          <li>— the daemon talks over a Unix socket and has no network access</li>
+          <li>— every record is hash-chained; <span class="code">memprove ledger verify</span> recomputes the chain</li>
+          <li>— tokens stay in ~/.memprove/config, never in your repository</li>
+          <li>— nothing is deleted: superseded statements stay, each naming its Session</li>
+        </ul>
+      </div>
+      <Term title="memprove doctor · ledger verify — tinyini" id="local">
+        <div class="tbody" style="line-height: 1.9">
+          {doctorLines.map((l) => <div class="wrapline"><span class="glow">PASS</span>{l.slice(4)}</div>)}
+          <div class="wrapline" style="margin-top: 8px"><span class="glow">$</span> memprove ledger verify</div>
+          <div class="wrapline dim">checked {ledger.checked.events} events, {ledger.checked.checkpoints} checkpoints, {ledger.checked.evidence} evidence, {ledger.checked.snapshots} snapshots</div>
+          <div class="wrapline"><span class="glow">"valid": {String(ledger.valid)}</span> <span class="dim">· head {ledger.head_event_sha256.slice(0, 19)}…</span></div>
+          <div class="ln" style="margin-top: 6px"><span class="glow">❯</span><span class="cur"></span></div>
+        </div>
+      </Term>
+    </div>
+  </section>
+
+  <!-- 11 · compare -->
+  <section class="sec">
+    <div class="wrap" style="display: flex; flex-direction: column; gap: 28px">
+      <div class="stack">
+        <p class="cap">[ 08 · compare ]</p>
+        <h2 class="h2">What decides whether a memory is still true?</h2>
+      </div>
+      <div class="panel scroll-x">
+        <table class="cmp">
+          <thead>
+            <tr><th scope="col" style="width: 36px">#</th><th scope="col">approach</th><th scope="col">who decides</th></tr>
+          </thead>
+          <tbody>
+            <tr><td class="num mono">01</td><td class="mono" style="font-size: 14px">CLAUDE.md, AGENTS.md</td><td class="who">You, when you remember to edit it</td></tr>
+            <tr><td class="num mono">02</td><td>Claude Code auto-memory, hosted memory layers</td><td class="who">A model reading wording and timestamps</td></tr>
+            <tr><td class="num mono">03</td><td>stalebrain, true-memory-fragments</td><td class="who">Checks of sentences against paths, symbol hashes or commits</td></tr>
+            <tr class="us"><td class="k-ok mono">■</td><td>memprove</td><td>A passed test run in the repository state you have now</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="cap" style="font-size: 12px">From these projects' own docs and READMEs, November 2026. <a href="https://github.com/memprove/memprove/issues">Tell us</a> if something here is out of date.</p>
+    </div>
+  </section>
+
+  <!-- 12 · status and closing -->
+  <section class="sec">
+    <div class="wrap" style="display: flex; flex-direction: column; gap: 56px">
+      <div class="two top">
+        <div class="stack">
+          <p class="cap">[ 09 · status ]</p>
+          <h2 class="h2">v{release.version}, and honest about its limits.</h2>
+          <a class="more" href="/changelog/">Changelog →</a>
+        </div>
+        <div class="panel">
+          <div class="phead"><span>[ known limits ]</span><span>v{release.version}</span></div>
+          <div class="lines" style="font-family: var(--mp-font-serif); font-size: 16.5px; line-height: 1.5; row-gap: 10px; color: var(--mp-body)">
+            <span class="num mono" style="font-size: 13px">01</span><span>Stable: the ledger format, the control API and the Pack's line set.</span>
+            <span class="num mono" style="font-size: 13px">02</span><span>Binaries for macOS on Apple silicon and Linux x86_64 (glibc 2.35+). Linux on arm64 isn't supported yet; elsewhere, build from source.</span>
+            <span class="num mono" style="font-size: 13px">03</span><span>Case counts are read from cargo and pytest output; other runners pass <span class="code">--test-cases</span>.</span>
+            <span class="num mono" style="font-size: 13px">04</span><span>Ignored files and environment variables are not part of the repository state.</span>
+            <span class="num mono" style="font-size: 13px">05</span><span>No tests, no verified: memprove is for repositories that have them.</span>
+          </div>
+        </div>
+      </div>
+
+      <Term title="memprove — ~/your-repo" id="start" class="closing-term">
+        <button type="button" class="replay" slot="head" id="replay">↻ replay</button>
+        <div class="closing">
+          <pre class="ascii glow" role="img" aria-label="memprove" id="logo">{logo.map((row) => <span data-row={row}>{row}</span>)}</pre>
+          <h2 class="h2" style="font-size: clamp(28px, 3vw, 40px)">Give your agent memory it can prove.</h2>
+          <div class="btns" style="justify-content: center">
+            <a class="btn" href="/docs/">Get started</a>
+            <a class="btn2" href="https://github.com/memprove/memprove">Star on GitHub</a>
+          </div>
+        </div>
+      </Term>
+    </div>
+  </section>
+</Site>
+
+<script>
+  import { initHome } from '../scripts/home';
+  initHome();
+</script>

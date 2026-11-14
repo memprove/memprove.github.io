@@ -1,0 +1,20 @@
+$ memprove resume --pack
+Pack: memprove-pack v1; capsule_digest sha256:9b2f9bd45319be25010bbe0ecbb937aaa7902f465f76af15a1f176edd669e43b; ledger sequence 7; probed HEAD 5ebf8ad58118f1d7bf8cf479951c3b36932f9676; budget 9000 UTF-16 code units
+Ontology: continuity.work-state-ontology.v4 (the version of the verdict rules)
+Task「parser: handle empty input」 (in_progress): verified; active claims 6: facts 4 (verified 4), open items 1, decisions 0, next actions 1; superseded 0; withdrawn 0 (facts 0)
+Integrity: no inconsistency found (the event chain is valid, and every record of this Task recomputes and agrees with the ledger)
+Sessions: 1 in all, 0 ended normally, 0 ended abandoned, 1 not ended, 0 declared a resumed_from Pack
+Session 1 01a1dc2c-4168-7511-b3a3-220085a788c5 not ended (started 2026-11-14T22:27:30.280957974Z, last wrote to the ledger at 2026-11-14T22:27:30.825220406Z)
+Last passed: 「python3 -m pytest -q」 (5ebf8ad58118; --test --test-format pytest)
+Can: complete the Task (transitionTask; cites 1 passed runs of the current repository state; needs mcp-write)
+Can: begin a new Session (createSession; first end it as the line of Session 1 says, or confirm it is still working; needs mcp-write)
+Can: record a fact citing the latest run (createCheckpoint; needs mcp-write)
+Base: 5ebf8ad58118f1d7bf8cf479951c3b36932f9676; files changed since: none
+#5 open item: 「an unterminated section header such as [core is untested」 (no evidence cited; from Session 1)
+#1 verified: 「parse() returns an empty document for empty or whitespace-only input」 (evidence bound to commit 5ebf8ad58118; from Session 1)
+#2 verified: 「input of only comments is an empty document」 (evidence bound to commit 5ebf8ad58118; from Session 1)
+#3 verified: 「keys before the first section header go into the default section」 (evidence bound to commit 5ebf8ad58118; from Session 1)
+#4 verified: 「a duplicate key keeps the last value」 (evidence bound to commit 5ebf8ad58118; from Session 1)
+#6 next action: 「write the unterminated-header test and run pytest」 (no evidence cited; from Session 1)
+Omitted: level 0; bases with files only counted 0, bodies shortened 0, bodies omitted 0, folded into one line 0, not listed 0; full text of given numbers: memprove resume --pack --claims <numbers> (such as 3,5-7)
+Digest: sha256:372b545739b632561676feda70b67506425a070275722cb3d026b26338b9551b

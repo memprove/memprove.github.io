@@ -1,0 +1,47 @@
+---
+import Site from '../layouts/Site.astro';
+import { release } from '../lib/site';
+---
+
+<Site
+  title="Roadmap · memprove"
+  description="What memprove does today, its open limits, and what comes next on memprove.dev."
+  current="roadmap"
+>
+  <section class="page">
+    <div class="wrap">
+      <div class="prose">
+        <p class="cap">[ roadmap ]</p>
+        <h1 class="h2">Where memprove is, and what comes next.</h1>
+
+        <h2>Now: {release.version}</h2>
+        <p>
+          The daemon and the CLI, the Claude Code SessionStart hook, the MCP server with ten tools, <code>memprove init</code> for
+          Claude Code, Codex and Cursor, the unattended takeover rule and its evaluation. The ledger format, the control API and
+          the Pack's line set are stable. <a href="/changelog/">The changelog</a> has the details.
+        </p>
+
+        <h2>Open limits</h2>
+        <ul>
+          <li>Release binaries cover macOS on Apple silicon and Linux x86_64. Linux on arm64 fails in the daemon's file-system sandbox; other platforms build from source.</li>
+          <li>Test case counts are read from cargo and pytest output. Other runners pass <code>--test --test-cases &lt;N&gt;</code>.</li>
+          <li>The repository state covers tracked files, the index, HEAD and the branch. Ignored files and environment variables are not part of it.</li>
+          <li>The macOS binaries are not notarized.</li>
+        </ul>
+
+        <h2>Next on memprove.dev</h2>
+        <ul>
+          <li>A one-line installer, <code>curl -fsSL https://memprove.dev/install.sh | sh</code>, that checks the release's SHA-256 before it installs.</li>
+          <li>A comparison page: how other memory tools decide whether a memory still holds.</li>
+          <li>The takeover evaluation's scenarios and results as a page of their own.</li>
+        </ul>
+
+        <h2>Follow along</h2>
+        <p>
+          Work is planned and discussed in the open on <a href="https://github.com/memprove/memprove/issues">GitHub issues</a>.
+          Each release is announced on <a href="https://github.com/memprove/memprove/releases">GitHub Releases</a>.
+        </p>
+      </div>
+    </div>
+  </section>
+</Site>

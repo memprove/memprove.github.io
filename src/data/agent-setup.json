@@ -1,0 +1,32 @@
+{
+  "recorded": false,
+  "note": "Mock-up until the setup through llms.txt is recorded in Claude Code, Codex and Cursor. Set recorded to true only with lines copied from such a run.",
+  "client": "your agent",
+  "prompt": "read memprove.dev/llms.txt and set memprove up in this repo",
+  "lines": [
+    {
+      "kind": "dim",
+      "text": "  reading https://memprove.dev/llms.txt"
+    },
+    {
+      "kind": "ok",
+      "text": "memprove 0.1.0 installed in ~/.memprove"
+    },
+    {
+      "kind": "ok",
+      "text": "memprove init · clients: claude-code"
+    },
+    {
+      "kind": "ok",
+      "text": "memprove doctor: 12 PASS, 2 WARN, 0 FAIL"
+    },
+    {
+      "kind": "ok",
+      "text": "memprove run · pytest r1 PASS"
+    },
+    {
+      "kind": "dim",
+      "text": "  changed: .claude/settings.local.json, .mcp.json"
+    }
+  ]
+}

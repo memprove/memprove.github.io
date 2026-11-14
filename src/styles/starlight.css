@@ -1,0 +1,112 @@
+/* The docs theme: light uses the page tokens, dark uses the terminal tokens. */
+:root {
+  --sl-font: var(--mp-font-sans);
+  --sl-font-mono: var(--mp-font-mono);
+  --sl-content-width: 46rem;
+  --sl-text-h1: 2.5rem;
+
+  /* dark (Starlight's default theme) */
+  --sl-color-accent-low: #12301f;
+  --sl-color-accent: #5ccf97;
+  --sl-color-accent-high: #a6ecc8;
+  --sl-color-white: #ffffff;
+  --sl-color-gray-1: #e6ebf0;
+  --sl-color-gray-2: #d8dee6;
+  --sl-color-gray-3: #8b949e;
+  --sl-color-gray-4: #5d6672;
+  --sl-color-gray-5: #2a3038;
+  --sl-color-gray-6: #13171c;
+  --sl-color-black: #0b0d10;
+  --sl-color-orange: #e8b052;
+  --sl-color-orange-high: #f3d08f;
+  --sl-color-orange-low: #3a2c14;
+  --sl-color-red: #f08a80;
+  --sl-color-red-high: #f6b9b2;
+  --sl-color-red-low: #3d1c19;
+  --sl-color-green: #5ccf97;
+  --sl-color-green-high: #a6ecc8;
+  --sl-color-green-low: #12301f;
+  --sl-color-blue: #a9b8cc;
+  --sl-color-blue-high: #d3dce8;
+  --sl-color-blue-low: #1d2530;
+}
+:root[data-theme='light'] {
+  --sl-color-accent-low: #dcebe2;
+  --sl-color-accent: #1f6f4a;
+  --sl-color-accent-high: #185a3c;
+  --sl-color-white: #1d1f21;
+  --sl-color-gray-1: #2b2e31;
+  --sl-color-gray-2: #3e4247;
+  --sl-color-gray-3: #5d6166;
+  --sl-color-gray-4: #6f7379;
+  --sl-color-gray-5: #d4d0c6;
+  --sl-color-gray-6: #ece9e1;
+  --sl-color-gray-7: #f4f2ec;
+  --sl-color-black: #fbfaf7;
+  --sl-color-bg-nav: #fbfaf7;
+  --sl-color-bg-sidebar: #fbfaf7;
+  --sl-color-bg-inline-code: #f1eee6;
+  --sl-color-hairline-light: #e3e0d8;
+  --sl-color-hairline: #e3e0d8;
+  --sl-color-hairline-shade: #d4d0c6;
+  --sl-color-orange-high: #7a4800;
+  --sl-color-orange: #9a5b00;
+  --sl-color-orange-low: #f6ecd9;
+  --sl-color-red-high: #7f1d17;
+  --sl-color-red: #a3271f;
+  --sl-color-red-low: #f7e2df;
+  --sl-color-green-high: #185a3c;
+  --sl-color-green: #1f6f4a;
+  --sl-color-green-low: #dcebe2;
+  --sl-color-blue-high: #3a4757;
+  --sl-color-blue: #4a5a6e;
+  --sl-color-blue-low: #e4e9ef;
+}
+
+/* serif body text, like the homepage */
+.sl-markdown-content :is(p, li, td, blockquote) {
+  font-family: var(--mp-font-serif);
+  font-size: 1.0625rem;
+  line-height: 1.6;
+}
+.sl-markdown-content :is(h1, h2, h3, h4) {
+  letter-spacing: -0.015em;
+}
+.sl-markdown-content :is(code, kbd) {
+  font-size: 0.86em;
+}
+.sl-markdown-content table {
+  font-size: 0.95rem;
+}
+.site-title {
+  font-weight: 600;
+  font-size: 1.15rem;
+  letter-spacing: -0.01em;
+  color: var(--sl-color-white);
+  gap: 0.6rem;
+}
+.site-title img {
+  height: 1.5rem;
+  width: auto;
+}
+/* square corners for panels and buttons; terminal-like code blocks keep a small radius */
+.sl-markdown-content .expressive-code .frame {
+  --ec-brdRad: 6px;
+}
+.mp-source {
+  margin-top: 2.5rem !important;
+  font-family: var(--mp-font-mono) !important;
+  font-size: 0.78rem !important;
+  color: var(--sl-color-gray-3);
+}
+.mp-source a {
+  color: var(--sl-color-gray-3);
+}
+.sl-markdown-content details {
+  border: 1px solid var(--sl-color-hairline);
+  padding: 0.5rem 1rem;
+}
+.sl-markdown-content summary {
+  cursor: pointer;
+  font-weight: 600;
+}

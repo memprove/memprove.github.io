@@ -1,0 +1,10 @@
+$ memprove resume --text
+Task「parser: handle empty input」 (in_progress): verified (ledger sequence 7, current HEAD 5ebf8ad58118f1d7bf8cf479951c3b36932f9676)
+Sessions: 1 in all, 0 ended normally, 0 ended abandoned, 1 not ended
+Session 1 01a1dc2c-4168-7511-b3a3-220085a788c5 (the Session this directory's context file records) not ended (started 2026-11-14T22:27:30.280957974Z, last wrote to the ledger at 2026-11-14T22:27:30.825220406Z)
+#5 open item: 「an unterminated section header such as [core is untested」 (no evidence cited; from Session 1)
+#1 verified: 「parse() returns an empty document for empty or whitespace-only input」 (evidence bound to commit 5ebf8ad58118f1d7bf8cf479951c3b36932f9676, current HEAD 5ebf8ad58118f1d7bf8cf479951c3b36932f9676; verdict: verified; from Session 1)
+#2 verified: 「input of only comments is an empty document」 (evidence bound to commit 5ebf8ad58118f1d7bf8cf479951c3b36932f9676, current HEAD 5ebf8ad58118f1d7bf8cf479951c3b36932f9676; verdict: verified; from Session 1)
+#3 verified: 「keys before the first section header go into the default section」 (evidence bound to commit 5ebf8ad58118f1d7bf8cf479951c3b36932f9676, current HEAD 5ebf8ad58118f1d7bf8cf479951c3b36932f9676; verdict: verified; from Session 1)
+#4 verified: 「a duplicate key keeps the last value」 (evidence bound to commit 5ebf8ad58118f1d7bf8cf479951c3b36932f9676, current HEAD 5ebf8ad58118f1d7bf8cf479951c3b36932f9676; verdict: verified; from Session 1)
+#6 next action: 「write the unterminated-header test and run pytest」 (no evidence cited; from Session 1)

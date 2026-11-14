@@ -1,0 +1,27 @@
+$ memprove init
+memprove init: ~/tinyini
+configuration directory: ~/.memprove/config (from HOME/.memprove/config)
+clients: claude-code
+Project 01a1dc2c-40dd-7160-b318-7542e520ca6e registered for ~/tinyini
+~/.memprove/config/contexts/44d77834010dab48a216a9deaf071bf532ac599b796b1a642592935beffdfcb8.pack.json written (the Project for the first `memprove begin` here)
+~/tinyini/.git/info/exclude written
+~/tinyini/.claude/settings.local.json written
+~/tinyini/.mcp.json written
+note: permissions.allow was left as it is; the rules an unattended `claude -p` needs are "mcp__memprove", "Bash(memprove run:*)", and "Bash(~/.memprove/bin/memprove run:*)"; `memprove init --allow-tools` adds them
+doctor:
+PASS data-dir:   ~/.memprove/data has mode 0700 (named by ~/.memprove/config/data-dir)
+PASS projects-dir: ~/.memprove/data/projects and its 1 Project directory, and ~/.memprove/data/tmp, have mode 0700 or stricter
+PASS socket:     ~/.memprove/data/memproved.sock has mode 0600
+PASS daemon:     memproved answers and is ready on ~/.memprove/data/memproved.sock
+PASS token-file: ~/.memprove/config/token has mode 0600 and holds one token
+PASS token:      memproved accepts the token, and it reaches the mcp-read and mcp-write operations
+PASS build:      memprove and memproved are the same build, 0.1.0 (71674684285e)
+PASS config-dir: ~/.memprove/config is outside every Git worktree
+PASS path:       ~/.memprove/bin is on PATH, so `memprove run` runs this executable and the rule Bash(memprove run:*) matches it
+PASS guide:      the guide at ~/.memprove/share/guide.md was installed with this binary (build 71674684285e)
+WARN workspace:  the Workspace ~/tinyini has no current context yet: `memprove begin --new-task <TITLE>` there starts the first Session, in Project 01a1dc2c-40dd-7160-b318-7542e520ca6e (the one `memprove init` registered)
+PASS hook:       ~/tinyini/.claude/settings.local.json runs ~/.memprove/bin/memprove hook session-start, which exists; its --config-dir is ~/.memprove/config, the configuration directory doctor uses (the argument wins over env.MEMPROVE_CONFIG_DIR)
+PASS mcp-entry:  ~/tinyini/.mcp.json has mcpServers.memprove, which runs ~/.memprove/bin/memprove; its --config-dir is ~/.memprove/config, the configuration directory doctor uses (the argument wins over env.MEMPROVE_CONFIG_DIR)
+WARN ledger:     not checked: no context names a Project here
+memprove doctor: 12 PASS, 2 WARN, 0 FAIL
+next: memprove begin --new-task "<TITLE>" in this repository starts the first Session; the agent's token and the daemon are found through ~/.memprove/config

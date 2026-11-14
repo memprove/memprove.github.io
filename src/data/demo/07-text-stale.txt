@@ -1,0 +1,10 @@
+$ memprove resume --text
+Task「parser: handle empty input」 (in_progress): stale (ledger sequence 8, current HEAD 558cb252ae874fa54bdc721048ab8d042610a88e) (reasons: head_changed, index_changed, evidence_stale)
+Sessions: 1 in all, 1 ended normally, 0 ended abandoned, 0 not ended
+#5 open item: 「an unterminated section header such as [core is untested」 (no evidence cited; from Session 1)
+#1 fact stale: 「parse() returns an empty document for empty or whitespace-only input」 (evidence bound to commit 5ebf8ad58118f1d7bf8cf479951c3b36932f9676, current HEAD 558cb252ae874fa54bdc721048ab8d042610a88e; changed files since 5ebf8ad58118f1d7bf8cf479951c3b36932f9676: 「tests/test_comments.py」, 「tinyini/__init__.py」; verdict: stale; from Session 1) (reasons: head_changed, index_changed, evidence_stale)
+#2 fact stale: 「input of only comments is an empty document」 (evidence bound to commit 5ebf8ad58118f1d7bf8cf479951c3b36932f9676, current HEAD 558cb252ae874fa54bdc721048ab8d042610a88e; changed files since 5ebf8ad58118f1d7bf8cf479951c3b36932f9676: same as #1; verdict: stale; from Session 1) (reasons: head_changed, index_changed, evidence_stale)
+#3 fact stale: 「keys before the first section header go into the default section」 (evidence bound to commit 5ebf8ad58118f1d7bf8cf479951c3b36932f9676, current HEAD 558cb252ae874fa54bdc721048ab8d042610a88e; changed files since 5ebf8ad58118f1d7bf8cf479951c3b36932f9676: same as #1; verdict: stale; from Session 1) (reasons: head_changed, index_changed, evidence_stale)
+#4 fact stale: 「a duplicate key keeps the last value」 (evidence bound to commit 5ebf8ad58118f1d7bf8cf479951c3b36932f9676, current HEAD 558cb252ae874fa54bdc721048ab8d042610a88e; changed files since 5ebf8ad58118f1d7bf8cf479951c3b36932f9676: same as #1; verdict: stale; from Session 1) (reasons: head_changed, index_changed, evidence_stale)
+Rerun: 「python3 -m pytest -q」 on the current HEAD 558cb252ae874fa54bdc721048ab8d042610a88e (for #1, #2, #3, #4)
+#6 next action: 「write the unterminated-header test and run pytest」 (no evidence cited; from Session 1)

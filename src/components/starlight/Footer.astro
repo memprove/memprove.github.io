@@ -1,0 +1,37 @@
+---
+import Default from '@astrojs/starlight/components/Footer.astro';
+---
+
+<Default />
+<div class="mp-docfoot">
+  <a href="/">memprove</a>
+  <a href="/about/">About</a>
+  <a href="/roadmap/">Roadmap</a>
+  <a href="/llms.txt">llms.txt</a>
+  <a href="https://github.com/memprove/memprove">GitHub</a>
+  <span>apache-2.0 · no cookies, no tracking</span>
+</div>
+
+<style>
+  .mp-docfoot {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem 1.25rem;
+    margin-top: 2rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--sl-color-hairline);
+    font-size: var(--sl-text-xs);
+    color: var(--sl-color-gray-3);
+  }
+  .mp-docfoot a {
+    color: var(--sl-color-gray-3);
+    text-decoration: none;
+  }
+  .mp-docfoot a:hover {
+    color: var(--sl-color-white);
+  }
+  .mp-docfoot span {
+    font-family: var(--sl-font-mono);
+    margin-left: auto;
+  }
+</style>
