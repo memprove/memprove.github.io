@@ -1,0 +1,53 @@
+---
+import Site from '../layouts/Site.astro';
+import { release } from '../lib/site';
+---
+
+<Site
+  title="About memprove"
+  description="Why memprove exists and the rules it is built by: evidence over wording, deterministic verdicts, nothing leaves your machine."
+  current="about"
+>
+  <section class="page">
+    <div class="wrap">
+      <div class="prose">
+        <p class="cap">[ about ]</p>
+        <h1 class="h2">Memory for coding agents should be checked, not trusted.</h1>
+        <p>
+          Coding agents now do work that spans many sessions: one session plans, another implements, a third is started
+          by a script at night and picks up where the last one stopped. Whatever they remember between those sessions is
+          only useful while it is still true of the code. memprove exists to answer that one question, with evidence
+          instead of a guess.
+        </p>
+        <p>
+          It is open source under the Apache License 2.0 and runs on your own machine. Version {release.version} was
+          released on {release.date}.
+        </p>
+
+        <h2>How it is built</h2>
+        <ul>
+          <li><strong>Evidence over wording.</strong> A fact is verified only while a test run it cites passed in the repository state you have now. memprove never judges the sentence itself.</li>
+          <li><strong>Deterministic.</strong> Verdicts come from fixed rules, not a model. The same ledger, repository state and budget give the same bytes.</li>
+          <li><strong>Local.</strong> The daemon talks over a Unix socket and has no network access. There is no account and nothing to send home.</li>
+          <li><strong>Nothing is deleted.</strong> A statement that no longer holds is superseded or withdrawn, and the record says which Session did it.</li>
+          <li><strong>Honest limits.</strong> No tests, no verified. The docs list what memprove cannot see, such as ignored files and environment variables.</li>
+          <li><strong>Set up by your agent.</strong> <a href="/llms.txt">llms.txt</a> gives a coding agent the steps, so integration happens in the session you already work in.</li>
+        </ul>
+
+        <h2>Where this is going</h2>
+        <p>
+          memprove is the first tool of a larger effort: software that makes work done with AI agents verifiable, so that a
+          person can trust a hand-off without re-reading everything. Each tool that follows will be held to the same rule as
+          this one: show the evidence, say what you cannot see.
+        </p>
+
+        <h2>Get in touch</h2>
+        <p>
+          Questions, bugs and ideas go to <a href="https://github.com/memprove/memprove/issues">GitHub issues</a>. Releases and
+          their notes are on <a href="https://github.com/memprove/memprove/releases">GitHub Releases</a> and in the
+          <a href="/changelog/">changelog</a>.
+        </p>
+      </div>
+    </div>
+  </section>
+</Site>

@@ -1,0 +1,2 @@
+$ memprove ledger verify
+{"checked":{"checkpoints":2,"events":17,"evidence":6,"snapshots":2,"tasks":1},"first_failure":null,"head_event_sha256":"sha256:1e58ce6d8ca5bf6d850e018529699268a7f608c5293299b639921df7de83b453","project_id":"01a1dc2c-40dd-7160-b318-7542e520ca6e","project_sequence":17,"schema_version":1,"valid":true}

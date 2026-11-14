@@ -1,0 +1,22 @@
+$ memprove resume --pack
+Pack: memprove-pack v1; capsule_digest sha256:9414b8d8e72952af25d7789995690c6d062a89c9a9ff0037dbb41dbc30783c23; ledger sequence 17; probed HEAD 558cb252ae874fa54bdc721048ab8d042610a88e; budget 9000 UTF-16 code units
+Ontology: continuity.work-state-ontology.v4 (the version of the verdict rules)
+Task「parser: handle empty input」 (in_progress): verified; active claims 6: facts 4 (verified 4), open items 1, decisions 0, next actions 1; superseded 5; withdrawn 0 (facts 0)
+Integrity: no inconsistency found (the event chain is valid, and every record of this Task recomputes and agrees with the ledger)
+Sessions: 2 in all, 1 ended normally, 0 ended abandoned, 1 not ended, 1 declared a resumed_from Pack
+Session 1 01a1dc2c-4168-7511-b3a3-220085a788c5 ended normally (started 2026-11-14T22:27:30.280957974Z)
+Session 2 01a1dc2c-452f-7891-b208-8570b22d9fea not ended (started 2026-11-14T22:27:31.247079849Z, last wrote to the ledger at 2026-11-14T22:27:31.711334172Z); continues from the Pack at ledger sequence 8 (self-reported, digest sha256:210efbefabe5)
+Last passed: 「python3 -m pytest -q」 (558cb252ae87; --test --test-format pytest)
+Can: complete the Task (transitionTask; cites 1 passed runs of the current repository state; needs mcp-write)
+Can: begin a new Session (createSession; first end it as the line of Session 2 says, or confirm it is still working; needs mcp-write)
+Can: record a fact citing the latest run (createCheckpoint; needs mcp-write)
+Base: 558cb252ae874fa54bdc721048ab8d042610a88e; files changed since: none
+#5 open item: 「an unterminated section header such as [core is untested」 (no evidence cited; from Session 1)
+#7 verified: 「parse() returns an empty document for empty or whitespace-only input」 (evidence bound to commit 558cb252ae87; from Session 2)
+#8 verified: 「input of only comments is an empty document」 (evidence bound to commit 558cb252ae87; from Session 2)
+#9 verified: 「keys before the first section header go into the default section」 (evidence bound to commit 558cb252ae87; from Session 2)
+#10 verified: 「a duplicate key keeps the last value」 (evidence bound to commit 558cb252ae87; from Session 2)
+#11 next action: 「write the unterminated-header test and run pytest」 (no evidence cited; from Session 2)
+Superseded and withdrawn: superseded 5: #1–#4, #6; withdrawn 0 (not listed one by one)
+Omitted: level 0; bases with files only counted 0, bodies shortened 0, bodies omitted 0, folded into one line 0, not listed 0; full text of given numbers: memprove resume --pack --claims <numbers> (such as 3,5-7)
+Digest: sha256:0383a5b2867948164753057d6f578f65fb38fe6cfb722797a64cf7c49d59f17d

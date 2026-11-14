@@ -1,0 +1,6 @@
+memprove 0.1.0 (71674684285e)
+python 3.13.18, pytest 8.3.5
+recorded 2026-11-14T22:27:32Z on Linux x86_64
+commit 558cb252ae874fa54bdc721048ab8d042610a88e parser: strip inline comments from values
+commit 5ebf8ad58118f1d7bf8cf479951c3b36932f9676 parser: handle empty input
+commit 068e92f61b9d611fd9a4cd147a193898e2c62353 tinyini: parse sections and keys

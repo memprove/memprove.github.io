@@ -1,0 +1,47 @@
+/*
+ * Design tokens. Two layers:
+ * - base: paper, ink, lines, type, terminal. Meant to be shared by future products.
+ * - memprove: the four verdict colours. They belong to memprove only, and they are
+ *   the only colours on the page. A verdict is always shown with its word too.
+ * Contrast (WCAG): page values on #fbfaf7, terminal values on #0b0d10, all text >= 4.5:1.
+ */
+:root {
+  /* base: page */
+  --mp-paper: #fbfaf7;
+  --mp-grid: rgba(29, 31, 33, 0.05);
+  --mp-panel: #ffffff;
+  --mp-line: #e3e0d8;
+  --mp-line-2: #d4d0c6;
+  --mp-fg: #1d1f21; /* 15.8:1 */
+  --mp-body: #3e4247; /* 9.7:1 */
+  --mp-muted: #5d6166; /* 6.0:1 */
+  --mp-faint: #6f7379; /* 4.6:1 */
+
+  /* base: terminal blocks (dark on the light page) */
+  --mp-term: #0b0d10;
+  --mp-term-border: #232830;
+  --mp-term-line: #1b2027;
+  --mp-term-line-2: #2a3038;
+  --mp-term-fg: #d8dee6; /* 14.4:1 */
+  --mp-term-body: #b4bcc6; /* 10.2:1 */
+  --mp-term-muted: #8b949e; /* 6.3:1 */
+  --mp-term-faint: #7a828d; /* 4.9:1 */
+
+  /* base: type. Swap these two tokens for licensed Styrene / Tiempos; nothing else changes. */
+  --mp-font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --mp-font-serif: 'Source Serif 4 Variable', 'Source Serif 4', Georgia, 'Times New Roman', serif;
+  --mp-font-mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+  /* memprove: verdicts on the page */
+  --mp-ok: #1f6f4a; /* verified, 5.9:1, also the brand colour */
+  --mp-ok-hover: #185a3c;
+  --mp-stale: #9a5b00; /* 5.2:1 */
+  --mp-unc: #4a5a6e; /* 6.8:1 */
+  --mp-bad: #a3271f; /* 7.0:1 */
+
+  /* memprove: verdicts inside terminal blocks */
+  --mp-t-ok: #5ccf97; /* 10.0:1 */
+  --mp-t-stale: #e8b052; /* 10.0:1 */
+  --mp-t-unc: #a9b8cc; /* 9.7:1 */
+  --mp-t-bad: #f08a80; /* 8.0:1 */
+}

@@ -1,0 +1,82 @@
+---
+import '@fontsource/inter/latin-400.css';
+import '@fontsource/inter/latin-500.css';
+import '@fontsource/inter/latin-600.css';
+import '@fontsource/inter/latin-700.css';
+import '@fontsource-variable/source-serif-4/opsz.css';
+import '@fontsource/ibm-plex-mono/latin-400.css';
+import '@fontsource/ibm-plex-mono/latin-600.css';
+import '../styles/tokens.css';
+import '../styles/site.css';
+import Mark from '../components/Mark.astro';
+import { repo } from '../lib/site';
+
+interface Props {
+  title: string;
+  description: string;
+  current?: 'home' | 'about' | 'roadmap';
+  noindex?: boolean;
+}
+const { title, description, current, noindex = false } = Astro.props;
+const canonical = new URL(Astro.url.pathname, Astro.site).href;
+const stars = repo.stars !== null && repo.stars >= 10 ? repo.stars : null;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    {!noindex && <link rel="canonical" href={canonical} />}
+    {noindex && <meta name="robots" content="noindex" />}
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="sitemap" href="/sitemap-index.xml" />
+    <link rel="alternate" type="text/plain" title="llms.txt" href="/llms.txt" />
+    <meta name="theme-color" content="#fbfaf7" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="memprove" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    {!noindex && <meta property="og:url" content={canonical} />}
+    <meta property="og:image" content="https://memprove.dev/og.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="memprove: Agent memory that is checked, not trusted. The four verdicts: verified, stale, unconfirmed, tampered." />
+    <meta name="twitter:card" content="summary_large_image" />
+    <slot name="head" />
+    <script is:inline>document.documentElement.classList.add('js');</script>
+  </head>
+  <body>
+    <a class="skip" href="#main">Skip to content</a>
+    <header class="top-bar">
+      <nav aria-label="Main" class="wrap nav">
+        <a class="brand" href="/" aria-current={current === 'home' ? 'page' : undefined}>
+          <Mark size={24} />
+          <span class="brand-name">memprove</span>
+        </a>
+        <a class="navl" href="/docs/">Docs</a>
+        <a class="navl" href="/how-it-works/">How it works</a>
+        <a class="navl opt" href="/changelog/">Changelog</a>
+        <a class="navl opt" href="https://github.com/memprove/memprove">GitHub{stars !== null && <span class="mono" style="font-size: 13px; margin-left: 6px">★ {stars}</span>}</a>
+        <a class="btn small nav-cta" href="/docs/">Get started</a>
+      </nav>
+    </header>
+    <main id="main">
+      <slot />
+    </main>
+    <footer class="foot">
+      <div class="wrap">
+        <span class="foot-name">memprove</span>
+        <a class="navl" href="/docs/">Docs</a>
+        <a class="navl" href="/changelog/">Changelog</a>
+        <a class="navl" href="/about/" aria-current={current === 'about' ? 'page' : undefined}>About</a>
+        <a class="navl" href="/roadmap/" aria-current={current === 'roadmap' ? 'page' : undefined}>Roadmap</a>
+        <a class="navl" href="/llms.txt">llms.txt</a>
+        <a class="navl" href="https://github.com/memprove/memprove">GitHub</a>
+        <span class="mono" style="font-size: 12.5px">apache-2.0 · no cookies, no tracking</span>
+      </div>
+    </footer>
+  </body>
+</html>

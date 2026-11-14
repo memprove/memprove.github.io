@@ -1,0 +1,8 @@
+[project]
+name = "tinyini"
+version = "0.1.0"
+description = "A small INI parser, used as the example repository on memprove.dev"
+requires-python = ">=3.9"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

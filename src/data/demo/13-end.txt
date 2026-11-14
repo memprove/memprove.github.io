@@ -1,0 +1,3 @@
+$ memprove end --reason "facts reaffirmed after the inline-comment change"
+{"agent_id":"01a1dc2c-4167-7cba-8d2f-d0c8cb0baebd","revision":2,"schema_version":1,"session_id":"01a1dc2c-452f-7891-b208-8570b22d9fea","state":"ended","workspace_id":"01a1dc2c-40dd-7160-b318-755b385c24a2"}
+memprove: the Session was cleared from the current context

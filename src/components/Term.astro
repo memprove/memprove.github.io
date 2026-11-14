@@ -1,0 +1,20 @@
+---
+// A terminal block: dark, rounded, mono. Used only where something runs.
+interface Props {
+  title: string;
+  class?: string;
+  id?: string;
+  label?: string;
+}
+const { title, class: cls = '', id, label } = Astro.props;
+---
+
+<div class={`term ${cls}`} id={id} role={label ? 'figure' : undefined} aria-label={label}>
+  <div class="thead">
+    <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+    <span class="title">{title}</span>
+    <slot name="head" />
+  </div>
+  <slot />
+  <div class="scan" aria-hidden="true"></div>
+</div>

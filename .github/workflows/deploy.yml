@@ -1,0 +1,62 @@
+# Builds memprove.dev and deploys it to GitHub Pages.
+#
+# The docs come from memprove/memprove at build time (scripts/sync-docs.mjs clones it), so the
+# site is rebuilt when this repository changes, by hand, and when memprove/memprove sends a
+# repository_dispatch event of type memprove-updated (for example from its release workflow).
+# Pull requests only build and check; nothing is deployed from them.
+#
+# Pages must be set to "GitHub Actions" (Settings → Pages → Build and deployment → Source)
+# before the first merge to main: with "Deploy from a branch", GitHub would publish this
+# repository's source files instead of the built site.
+name: Deploy memprove.dev
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+  repository_dispatch:
+    types: [memprove-updated]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pages-${{ github.event_name == 'pull_request' && github.ref || 'deploy' }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Build (sync docs from memprove/memprove, astro build, check dist)
+        run: npm run build
+        env:
+          # A branch or tag of memprove/memprove; set the repository variable to pin the docs to a release.
+          MEMPROVE_REF: ${{ vars.MEMPROVE_REF || 'main' }}
+          GITHUB_TOKEN: ${{ github.token }}
+      - if: github.event_name != 'pull_request'
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    if: github.event_name != 'pull_request'
+    needs: build
+    runs-on: ubuntu-24.04
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
