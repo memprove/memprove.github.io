@@ -879,3 +879,67 @@ h1.hero {
   border: 1px solid var(--mp-line-2);
   padding: 0 4px;
 }
+
+/* ---------- copy button in a terminal head (shown only with JavaScript) */
+.copy {
+  display: none;
+  font-family: var(--mp-font-sans);
+  font-size: 12px;
+  min-height: 32px;
+  min-width: 44px;
+  padding: 0 10px;
+  border-radius: 6px;
+  border: 1px solid var(--mp-term-line-2);
+  background: transparent;
+  color: var(--mp-term-muted);
+  cursor: pointer;
+  position: relative;
+  z-index: 1;
+}
+.js .copy {
+  display: inline-block;
+}
+.copy:hover {
+  color: var(--mp-term-fg);
+}
+.copy:focus-visible {
+  outline-color: var(--mp-t-ok);
+}
+
+/* ---------- Chinese pages: system CJK fonts (none are downloaded), sans body, looser lines */
+.zh {
+  --mp-font-cjk: 'Inter', 'PingFang SC', 'Hiragino Sans GB', 'Noto Sans CJK SC', 'Noto Sans SC', 'Source Han Sans SC', 'Microsoft YaHei', system-ui, sans-serif;
+  font-family: var(--mp-font-cjk);
+}
+.zh .prose {
+  max-width: 760px;
+}
+.zh .h2,
+.zh .prose h2,
+.zh .prose h3 {
+  font-family: var(--mp-font-cjk);
+  letter-spacing: 0;
+}
+.zh .prose h3 {
+  margin: 12px 0 0;
+  font-size: 20px;
+  font-weight: 600;
+}
+.zh .prose p,
+.zh .prose li {
+  font-family: var(--mp-font-cjk);
+  font-size: 17px;
+  line-height: 1.85;
+}
+.zh .prose li code {
+  word-break: break-all;
+}
+.zh .prose .note {
+  font-size: 15px;
+  color: var(--mp-muted);
+  border-left: 2px solid var(--mp-line-2);
+  padding-left: 14px;
+}
+.zh .term {
+  margin: 2px 0;
+}

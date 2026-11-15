@@ -18,6 +18,7 @@ const required = [
   '404.html',
   'about/index.html',
   'roadmap/index.html',
+  'zh/index.html',
   'docs/index.html',
   'docs/index.md',
   'docs/guide/index.html',

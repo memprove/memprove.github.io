@@ -1,0 +1,58 @@
+---
+// A terminal block for commands people copy: a prompt on each command, comments dimmed,
+// continuation lines (after a trailing backslash) without a prompt, and a copy button.
+// With output, the first line is the command and the rest is printed as it was recorded.
+import Term from './Term.astro';
+
+interface Props {
+  title: string;
+  code: string;
+  /** Text of the copy button; empty for none. */
+  copy?: string;
+  /** The first line is a command and the rest its output (no copy button). */
+  output?: boolean;
+  label?: string;
+}
+const { title, code, copy = '', output = false, label } = Astro.props;
+const text = code.replace(/\n+$/, '');
+const lines = text.split('\n');
+
+type Row = { kind: 'cmd' | 'cont' | 'comment' | 'blank' | 'out'; text: string; note?: string };
+const rows: Row[] = lines.map((l, i) => {
+  if (output && i > 0) return { kind: 'out', text: l.replace(/^\$ /, '') };
+  if (output) return { kind: 'cmd', text: l.replace(/^\$ /, '') };
+  if (l.trim() === '') return { kind: 'blank', text: '' };
+  if (l.startsWith('#')) return { kind: 'comment', text: l };
+  const m = l.match(/^(.*?\S)(\s{2,}#.*)$/);
+  const [cmd, note] = m ? [m[1], m[2]] : [l, ''];
+  return { kind: i > 0 && lines[i - 1].endsWith('\\') ? 'cont' : 'cmd', text: cmd, note };
+});
+const escape = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;');
+// In recorded output, the verdict words keep their colours.
+const paint = (s: string) =>
+  escape(s)
+    .replace(/\b(verified)\b/g, '<span class="k-ok">$1</span>')
+    .replace(/\b(stale)\b/g, '<span class="k-st">$1</span>')
+    .replace(/\b(unconfirmed)\b/g, '<span class="k-un">$1</span>');
+---
+
+<Term title={title} label={label}>
+  {copy && !output && <button slot="head" class="copy" type="button" data-copy={text} data-done="已复制">{copy}</button>}
+  <div class={`tbody${output ? ' out' : ''}`}>
+    {
+      rows.map((r) =>
+        r.kind === 'blank' ? (
+          <div class="ln">&nbsp;</div>
+        ) : r.kind === 'comment' ? (
+          <div class="ln hang dim">{r.text}</div>
+        ) : r.kind === 'out' ? (
+          <div class="ln hang" set:html={paint(r.text) || '&nbsp;'} />
+        ) : r.kind === 'cont' ? (
+          <div class="ln hang">{r.text}<span class="dim">{r.note}</span></div>
+        ) : (
+          <div class="ln hang"><span class="glow">$</span> {r.text}<span class="dim">{r.note}</span></div>
+        ),
+      )
+    }
+  </div>
+</Term>
