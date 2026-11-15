@@ -46,8 +46,6 @@ function tabs() {
       e.preventDefault();
     });
   }
-  // Linux visitors see the Linux archive first.
-  if (/Linux/.test(navigator.platform) && !/Android/.test(navigator.userAgent)) select(all[1]);
 }
 
 /** Types el's data-text, then calls done. Returns a function that stops it. */

@@ -7,9 +7,11 @@ type Repo = { stars: number | null; commit: string; releases: { tag: string; nam
 const generated = import.meta.glob<{ default: Repo }>('../data/generated/repo.json', { eager: true });
 export const repo: Repo = Object.values(generated)[0]?.default ?? { stars: null, commit: 'unknown', releases: [] };
 
+// The one-line installer: public/install.sh, served at memprove.dev/install.sh.
+export const installCommand = 'curl -fsSL https://memprove.dev/install.sh | sh';
+
 export const installCommands = {
-  macos: archiveCommands(release.targets.macos.triple),
-  linux: archiveCommands(release.targets.linux.triple),
+  script: [installCommand],
   source: [
     'git clone https://github.com/memprove/memprove && cd memprove',
     'cargo fetch --locked',
@@ -17,8 +19,3 @@ export const installCommands = {
     'scripts/install.sh --from-binaries target/release',
   ],
 };
-
-function archiveCommands(triple: string): string[] {
-  const name = `memprove-${release.version}-${triple}`;
-  return [`curl -LO ${release.base}/${name}.tar.gz`, `tar -xzf ${name}.tar.gz && cd ${name}`, 'scripts/install.sh --from-binaries bin'];
-}

@@ -8,16 +8,24 @@ These are the steps for a coding agent whose user asked it to set memprove up. R
 
 1. Check for an installation: `memprove --version`. If it prints `memprove {{version}}` or later, skip to step 4. If `~/.memprove/bin/memprove` exists but is not on `PATH`, run `export PATH="$HOME/.memprove/bin:$PATH"` and skip to step 4.
 
-2. Pick the release archive for this machine from `uname -sm`:
-   - `Darwin arm64`: `aarch64-apple-darwin`
-   - `Linux x86_64` (glibc 2.35 or later, such as Ubuntu 22.04 or Debian 12): `x86_64-unknown-linux-gnu`
-   - anything else (Intel macOS, Linux arm64, Windows): there is no release binary. Stop and tell the user; building from source is described at https://memprove.dev/docs/guide/install-upgrade-and-backup.md and needs a Rust toolchain and libclang.
-
-3. Download, verify and install, in a temporary directory outside the repository (never inside it):
+2. Install with the installer, in a temporary directory outside the repository (never inside it). Download it first, then run it as a command of its own:
 
    ```bash
    cd "$(mktemp -d)"
-   target=aarch64-apple-darwin        # or x86_64-unknown-linux-gnu, from step 2
+   curl -fsSLo install.sh https://memprove.dev/install.sh
+   sh install.sh --no-write-profile
+   export PATH="$HOME/.memprove/bin:$PATH"
+   memprove --version
+   ```
+
+   It supports macOS on Apple silicon and Linux x86_64 with glibc 2.35 or later (such as Ubuntu 22.04 or Debian 12). It picks the archive for this machine from the latest release, stops unless the archive's SHA-256 matches the release's `.sha256` file, and runs the archive's `scripts/install.sh`, which installs into `~/.memprove`, starts the daemon `memproved` and writes the operator's token to `~/.memprove/operator-token`. If it exits with status 1, read its `memprove-install: error:` lines and stop: on a platform without a release archive (Intel macOS, Linux arm64, musl, Windows), tell the user that building from source is described at https://memprove.dev/docs/guide/install-upgrade-and-backup.md and needs a Rust toolchain and libclang; on a checksum mismatch it installed nothing: tell the user and do not install memprove another way. `MEMPROVE_VERSION={{version}} sh install.sh --no-write-profile` installs a given release.
+
+   Never read, print or copy `~/.memprove/operator-token` or `~/.memprove/config/token`, and never put a token into a file of the repository. `--no-write-profile` leaves the shell profile alone; ask the user before you run the installer again with `--write-profile`, which adds the `PATH` line to their profile so that later sessions find `memprove`.
+
+3. Only if the installer cannot be used (the user asks for it, or memprove.dev cannot be reached), the same steps by hand, from the same temporary directory, with `target` from `uname -sm` (`Darwin arm64`: `aarch64-apple-darwin`; `Linux x86_64`: `x86_64-unknown-linux-gnu`):
+
+   ```bash
+   target=aarch64-apple-darwin        # or x86_64-unknown-linux-gnu
    base={{base}}
    curl -fLO "$base/memprove-{{version}}-$target.tar.gz"
    curl -fLO "$base/memprove-{{version}}-$target.tar.gz.sha256"
@@ -28,7 +36,7 @@ These are the steps for a coding agent whose user asked it to set memprove up. R
    memprove --version
    ```
 
-   Stop if the checksum does not match. `install.sh` installs into `~/.memprove`, starts the daemon `memproved` and writes the operator's token to `~/.memprove/operator-token`. Never read, print or copy that file or `~/.memprove/config/token`, and never put a token into a file of the repository. `--no-write-profile` leaves the shell profile alone; ask the user before you run `install.sh` again with `--write-profile`, which adds the `PATH` line to their profile so that later sessions find `memprove`.
+   Stop if the checksum does not match.
 
 4. Go to the repository's root (a Git worktree with at least one commit) and enable it:
 
