@@ -126,18 +126,18 @@ const ld = {
 
         <Term title="~/tinyini" id="install">
           <div class="tabs" role="tablist" aria-label="Install for" slot="head">
-            <button type="button" class="tab" role="tab" id="tab-macos" aria-controls="pane-macos" aria-selected="true">macos</button>
-            <button type="button" class="tab" role="tab" id="tab-linux" aria-controls="pane-linux" aria-selected="false" tabindex="-1">linux</button>
+            <button type="button" class="tab" role="tab" id="tab-script" aria-controls="pane-script" aria-selected="true">macos · linux</button>
             <button type="button" class="tab" role="tab" id="tab-source" aria-controls="pane-source" aria-selected="false" tabindex="-1">source</button>
           </div>
           <div class="tbody">
             {
-              (['macos', 'linux', 'source'] as const).map((os) => (
-                <div class="pane" role="tabpanel" id={`pane-${os}`} aria-labelledby={`tab-${os}`} hidden={os !== 'macos'}>
-                  <div class="ln pane-label"># {os === 'source' ? 'from source (Rust 1.96, libclang)' : release.targets[os].label}</div>
-                  {installCommands[os].map((c) => (
+              (['script', 'source'] as const).map((way) => (
+                <div class="pane" role="tabpanel" id={`pane-${way}`} aria-labelledby={`tab-${way}`} hidden={way !== 'script'}>
+                  <div class="ln pane-label"># {way === 'source' ? 'from source (Rust 1.96, libclang)' : `${release.targets.macos.label} · ${release.targets.linux.label}`}</div>
+                  {installCommands[way].map((c) => (
                     <div class="ln hang"><span class="glow">$</span> {c}</div>
                   ))}
+                  {way === 'script' && <div class="ln hang dim"># checks the release's SHA-256, installs into ~/.memprove, starts the daemon</div>}
                 </div>
               ))
             }

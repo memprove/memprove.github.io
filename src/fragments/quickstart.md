@@ -2,7 +2,32 @@
 
 ## 1. Install
 
-Release binaries are built for macOS on Apple silicon (`aarch64-apple-darwin`) and Linux x86_64 with glibc 2.35 or later, such as Ubuntu 22.04 and Debian 12 (`x86_64-unknown-linux-gnu`):
+On macOS on Apple silicon, or Linux x86_64 with glibc 2.35 or later (such as Ubuntu 22.04 and Debian 12):
+
+```bash
+curl -fsSL https://memprove.dev/install.sh | sh
+export PATH="$HOME/.memprove/bin:$PATH"     # --write-profile puts it in the profile
+memprove --version
+```
+
+[The installer](/install.sh) picks the release archive for the machine (`aarch64-apple-darwin` or `x86_64-unknown-linux-gnu`) from the latest [GitHub release](https://github.com/memprove/memprove/releases), stops unless the archive's SHA-256 matches its `.sha256` file, and runs the archive's own `scripts/install.sh --from-binaries bin`: memprove goes into `~/.memprove` and the daemon starts. Run it again to upgrade; the data is backed up first. Options go after `sh -s --`:
+
+```bash
+# also write the PATH line into the shell profile
+curl -fsSL https://memprove.dev/install.sh | sh -s -- --write-profile
+# change no profile and ask nothing
+curl -fsSL https://memprove.dev/install.sh | sh -s -- --no-write-profile
+# another directory; it then also needs the MEMPROVE_* lines it prints
+curl -fsSL https://memprove.dev/install.sh | sh -s -- --prefix ~/tools/memprove
+# a given release instead of the latest
+curl -fsSL https://memprove.dev/install.sh | MEMPROVE_VERSION={{version}} sh
+```
+
+With neither profile option, a run in a terminal asks once before it changes the profile. Linux on arm64 is not supported yet, and the installer stops on any platform without a release archive; build from source there, as [Install, upgrade and backup](/docs/guide/install-upgrade-and-backup/) says.
+
+### By hand
+
+The same steps without the installer, release {{version}}:
 
 ```bash
 target=aarch64-apple-darwin        # or x86_64-unknown-linux-gnu
@@ -16,7 +41,7 @@ scripts/install.sh --from-binaries bin        # installs into ~/.memprove and st
 export PATH="$HOME/.memprove/bin:$PATH"       # --write-profile puts this line in your shell profile
 ```
 
-The macOS binaries are not notarized: if a browser downloaded the archive, clear the quarantine flag first (`xattr -dr com.apple.quarantine memprove-{{version}}-aarch64-apple-darwin`). Linux on arm64 is not supported yet. On any other platform, build from source as [Install, upgrade and backup](/docs/guide/install-upgrade-and-backup/) says.
+The macOS binaries are not notarized: if a browser downloaded the archive, clear the quarantine flag first (`xattr -dr com.apple.quarantine memprove-{{version}}-aarch64-apple-darwin`). Archives that `curl` downloads, as the installer does, carry no such flag.
 
 ## 2. Enable a repository
 

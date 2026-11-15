@@ -1,5 +1,5 @@
 // Checks the built site in dist/ before it is deployed. Exits 1 on the first run with problems.
-//   - the pages, raw Markdown copies and agent files exist
+//   - the pages, raw Markdown copies, agent files and install.sh exist
 //   - every internal link and #fragment in the HTML, and every link in llms.txt, resolves
 //   - the homepage stays under its size budget (HTML + CSS + JS, fonts excluded)
 //   - nothing from a build machine (home paths) leaked into the output
@@ -33,9 +33,15 @@ const required = [
   'favicon.svg',
   'og.png',
   'CNAME',
+  'install.sh',
 ];
 for (const f of required) if (!existsSync(join(dist, f))) fail(`missing ${f}`);
 if (existsSync(join(dist, 'CNAME')) && readFileSync(join(dist, 'CNAME'), 'utf8').trim() !== 'memprove.dev') fail('CNAME is not memprove.dev');
+// The installer is served as written: a POSIX sh script whose last line runs main (scripts/test-install.sh tests it).
+if (existsSync(join(dist, 'install.sh'))) {
+  const sh = readFileSync(join(dist, 'install.sh'), 'utf8');
+  if (!sh.startsWith('#!/bin/sh\n') || !sh.endsWith('\nmain "$@"\n')) fail('install.sh does not start with #!/bin/sh or does not end with main "$@"');
+}
 
 // ---- collect HTML pages and their ids
 function walk(dir) {

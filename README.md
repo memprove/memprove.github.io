@@ -13,6 +13,7 @@ The website of [memprove](https://github.com/memprove/memprove): the homepage, t
 | `/docs/takeover-eval/` | memprove's `docs/takeover-eval.md` |
 | `/changelog/` | GitHub releases of memprove/memprove, then its `CHANGELOG.md` |
 | `/llms.txt`, `/llms-full.txt` | `src/fragments/llms.md` with the page list; all pages in one file |
+| `/install.sh` | `public/install.sh`, the one-line installer (`curl -fsSL https://memprove.dev/install.sh \| sh`) |
 | every doc page as `.md` | the same Markdown, next to the page (`/docs/guide/the-context-pack.md`) |
 
 `scripts/sync-docs.mjs` generates the docs pages before each build: it clones memprove/memprove (or uses `MEMPROVE_REPO`), splits and rewrites the Markdown, and writes the generated files, which are not committed (see `.gitignore`). Edit the docs in memprove/memprove, not here.
@@ -27,6 +28,16 @@ To record again, for example after a release, on a machine with that release ins
 demo/record.sh          # rewrites src/data/demo/*.txt
 npm run build           # fails if a figure no longer finds the line it shows
 ```
+
+## The installer
+
+`public/install.sh` is served as it is at `https://memprove.dev/install.sh`. It is POSIX `sh`: it picks the release archive for the machine (`aarch64-apple-darwin` or `x86_64-unknown-linux-gnu`; anything else stops with a pointer to the source build), takes the latest release unless `MEMPROVE_VERSION` names one, downloads the archive and its `.sha256` file from the GitHub release, stops unless the SHA-256 matches, and runs the archive's `scripts/install.sh --from-binaries bin`, passing on `--prefix`, `--write-profile` and `--no-write-profile`. Everything is inside `main`, called on the last line, so a download cut short runs nothing.
+
+```bash
+npm run test:install     # offline: fake curl, uname and release; shellcheck when it is installed
+```
+
+`scripts/test-install.sh` runs it under `/bin/sh` (`INSTALLER_SH=bash` picks another shell) with a `PATH` that holds only the tools it may need, and the deploy workflow runs it before every build. It does not download anything; after a release, also run the installer for real on both platforms.
 
 ## Build
 
