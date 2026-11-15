@@ -80,5 +80,6 @@ These are the steps for a coding agent whose user asked it to set memprove up. R
 ## Optional
 
 - [Full text of every docs page](https://memprove.dev/llms-full.txt): the pages above in one file.
+- [中文快速上手](https://memprove.dev/zh/): the Quickstart in Simplified Chinese, for people who read Chinese. The steps above are the same.
 - [Source repository](https://github.com/memprove/memprove): Rust workspace, Apache-2.0. These docs were generated from commit {{commit}}.
 - [Release {{tag}}](https://github.com/memprove/memprove/releases/tag/{{tag}}): archives and their SHA-256 files.

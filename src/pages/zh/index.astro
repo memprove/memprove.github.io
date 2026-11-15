@@ -1,0 +1,210 @@
+---
+// The Quickstart in Simplified Chinese. It follows src/fragments/quickstart.md section by section;
+// commands, output and the words memprove prints stay in English, as memprove prints them.
+import Site from '../../layouts/Site.astro';
+import CodeTerm from '../../components/CodeTerm.astro';
+import { release, installCommand } from '../../lib/site';
+import { transcript } from '../../lib/demo';
+
+const v = release.version;
+const { macos, linux } = release.targets;
+const archive = (triple: string) => `${release.base}/memprove-${v}-${triple}.tar.gz`;
+const repo = 'https://github.com/memprove/memprove';
+
+const install = [
+  installCommand,
+  '# 加 --write-profile 时，安装器会把下面这一行写进 shell 配置文件',
+  'export PATH="$HOME/.memprove/bin:$PATH"',
+  'memprove --version',
+].join('\n');
+
+const options = [
+  '# 同时把 PATH 这一行写进 shell 配置文件',
+  `${installCommand} -s -- --write-profile`,
+  '# 不改任何配置文件，也不提问',
+  `${installCommand} -s -- --no-write-profile`,
+  '# 装到别的目录；这时还需要它打印出的那几行 MEMPROVE_*',
+  `${installCommand} -s -- --prefix ~/tools/memprove`,
+  '# 装指定的版本，而不是最新版',
+  `curl -fsSL https://memprove.dev/install.sh | MEMPROVE_VERSION=${v} sh`,
+].join('\n');
+
+const byHand = [
+  `# Linux 上改成 target=${linux.triple}`,
+  `target=${macos.triple}`,
+  `base=${release.base}`,
+  `curl -LO "$base/memprove-${v}-$target.tar.gz"`,
+  `curl -LO "$base/memprove-${v}-$target.tar.gz.sha256"`,
+  `shasum -a 256 -c "memprove-${v}-$target.tar.gz.sha256"`,
+  `tar -xzf "memprove-${v}-$target.tar.gz"`,
+  `cd "memprove-${v}-$target"`,
+  '# 装进 ~/.memprove 并启动 daemon；加 --write-profile 会把 PATH 这一行写进 shell 配置文件',
+  'scripts/install.sh --from-binaries bin',
+  'export PATH="$HOME/.memprove/bin:$PATH"',
+].join('\n');
+
+// The same session as memprove's README ("One session, five commands"), with the comments translated.
+const session = [
+  '# 开始一个 Session；不带 --new-task 的 begin 继续当前 Task',
+  'memprove begin --new-task "parser: handle empty input"',
+  '# ……编辑、提交……',
+  '# 运行测试：这次运行就是 Evidence，标签是 r1',
+  'memprove run --test-format cargo -- cargo test',
+  '# 记录 fact（引用 r1）、open item 和 next action',
+  'memprove checkpoint create \\',
+  '  --fact "the parser accepts empty input and reports it as an empty document" \\',
+  '  --evidence r1 \\',
+  '  --open "the error path for a truncated header is untested" \\',
+  '  --next "write the truncated-header test and run cargo test"',
+  '# 下一个会话会读到的内容',
+  'memprove resume --pack',
+  '# 结束 Session',
+  'memprove end --reason "empty input handled"',
+].join('\n');
+
+const pack = transcript('05-pack-verified');
+---
+
+<Site
+  title="memprove 快速上手（中文）"
+  description={`安装 memprove ${v}，用 memprove init 在仓库里启用，再在一次通过的测试运行上记录第一条 fact。`}
+  current="zh"
+  lang="zh-CN"
+  alternates={[
+    { hreflang: 'en', href: 'https://memprove.dev/docs/' },
+    { hreflang: 'x-default', href: 'https://memprove.dev/docs/' },
+  ]}
+>
+  <section class="page zh">
+    <div class="wrap">
+      <article class="prose">
+        <p class="cap">[ 中文快速上手 · memprove {v} ]</p>
+        <h1 class="h2">快速上手</h1>
+        <p>
+          memprove 是给 coding agent 用的记忆和任务状态层。agent 记录的每条 fact 都绑定到一个 commit、一个仓库状态和一次测试运行，由确定性的规则（不是模型）判断它现在是
+          <code>verified</code>、<code>stale</code> 还是 <code>unconfirmed</code>。记录保存在本地 daemon 维护的哈希链 ledger 里。新的会话（之后的同一个
+          agent、另一个 agent，或者一个人）读一份紧凑的 Context Pack：哪些仍然成立、哪些还没解决、下一步做什么；再按一条规则接手工作，这条规则说明什么时候可以结束别人留下的 Session。
+        </p>
+        <p>
+          它是一个 Rust workspace：<code>memproved</code>（daemon）、<code>memprove</code>（命令行客户端、Claude Code 的 SessionStart hook，以及一个有十个工具的
+          MCP server），还有它们共用的 crate。所有东西都在你的机器上通过 Unix socket 运行，没有数据离开你的机器。
+        </p>
+        <p class="note">
+          memprove 的命令、输出和完整文档都是英文的，本页只翻译说明文字。Task、Session、fact、Evidence、Pack 这些词保留英文，因为命令和输出里就是这些词。英文原文：<a href="/docs/" hreflang="en" lang="en">Quickstart</a>。
+        </p>
+
+        <h2 id="install">1. 安装</h2>
+        <p>支持 Apple 芯片的 macOS，以及 glibc 2.35 或更高版本的 Linux x86_64（比如 Ubuntu 22.04、Debian 12）：</p>
+        <CodeTerm title="bash" code={install} copy="复制" label="一行安装" />
+        <p>
+          <a href="/install.sh">安装器</a>从最新的 <a href={`${repo}/releases`}>GitHub release</a> 里挑出适合这台机器的发布包（<code>{macos.triple}</code> 或
+          <code>{linux.triple}</code>），发布包的 SHA-256 和它的 <code>.sha256</code> 文件对不上就停下，然后运行发布包自带的
+          <code>scripts/install.sh --from-binaries bin</code>：memprove 装进 <code>~/.memprove</code>，daemon 随之启动。再运行一次就是升级，数据会先备份。选项写在
+          <code>sh -s --</code> 后面：
+        </p>
+        <CodeTerm title="bash · 选项" code={options} />
+        <p>
+          两个配置文件选项都不加时，如果是在终端里运行，安装器会在修改配置文件之前问一次。Linux arm64 暂不支持；在没有发布包的平台上安装器会直接停下，这时请按
+          <a href="/docs/guide/install-upgrade-and-backup/">Install, upgrade and backup</a>（英文）从源码构建。
+        </p>
+
+        <h3 id="by-hand">手动安装</h3>
+        <p>不用安装器，同样的步骤，版本 {v}：</p>
+        <CodeTerm title="bash · 手动安装" code={byHand} copy="复制" />
+        <p>
+          macOS 的二进制没有经过公证：如果发布包是用浏览器下载的，先清除隔离标记（<code>xattr -dr com.apple.quarantine memprove-{v}-{macos.triple}</code>）。用
+          <code>curl</code> 下载的包（安装器就是这样下载的）没有这个标记。
+        </p>
+        <p>
+          安装器和手动安装都从 GitHub 下载。如果你的网络访问 GitHub 很慢，可以先用浏览器或代理下载发布包和它的 <code>.sha256</code> 文件（macOS：<a href={archive(macos.triple)}>发布包</a>、<a
+            href={`${archive(macos.triple)}.sha256`}>.sha256</a
+          >；Linux：<a href={archive(linux.triple)}>发布包</a>、<a href={`${archive(linux.triple)}.sha256`}>.sha256</a>），放进同一个目录，再从上面的
+          <code>shasum</code> 那一行接着做。
+        </p>
+
+        <h2 id="init">2. 在仓库里启用</h2>
+        <p>在仓库的 Git 工作区里运行（仓库至少要有一个 commit）：</p>
+        <CodeTerm title="bash" code="memprove init" copy="复制" />
+        <p>
+          <code>init</code> 会注册这个 Project；通过 <code>.git/info/exclude</code> 把 memprove 自己的文件排除在 Evidence 之外；为它找到的客户端写配置（Claude
+          Code：<code>.claude/settings.local.json</code> 里的 SessionStart hook 和 <code>.mcp.json</code>；Codex：<code>~/.codex/config.toml</code> 和
+          <code>AGENTS.md</code> 里的一段说明；Cursor：<code>.cursor/mcp.json</code> 和一条 rule）；最后运行 <code>memprove doctor</code>。再运行一次不会改变任何东西。<code
+            >--client</code
+          > 指定客户端；<code>--allow-tools</code> 还会写入 Claude Code 对 MCP server 和 <code>memprove run</code> 的 allow 规则。第一个 Session 之前，<code
+            >doctor</code
+          > 会打印两行 <code>WARN</code>（<code>workspace</code>、<code>ledger</code>），之后两项都会通过。细节见
+          <a href="/docs/guide/enabling-memprove-in-a-project/">Enabling memprove in a project</a>（英文）。
+        </p>
+
+        <h2 id="five-commands">3. 一次会话，五条命令</h2>
+        <CodeTerm title="bash · 一次会话" code={session} copy="复制" />
+        <p>
+          <code>begin</code> 在一个 Task 上开始一个 Session（加 <code>--new-task</code> 时同时创建这个 Task）。<code>run</code> 在你的 shell
+          里运行命令，并把结果和当时的仓库状态一起记录下来。<code>checkpoint create</code> 记录 fact（每条都引用运行）、open item、decision 和 next action；fact
+          需要一次通过的测试运行，并且只有在工作区和那次运行一致时才保持 <code>verified</code>（测试运行生成的文件要提交或忽略，比如第一次生成的 <code>Cargo.lock</code>）。
+        </p>
+        <p>
+          <code>resume --pack</code> 打印 Context Pack：Task 的判定、各个 Session、最近一次通过的运行、接下来能做什么、每条有效陈述的判定和它绑定的 commit，以及需要重新运行什么。<code
+            >end</code
+          > 结束 Session。在 Claude Code 里，hook 会在每个会话开始时注入 Pack；MCP 工具能做命令能做的事，只有运行命令除外：测试总是用 <code>memprove run</code> 记录。
+        </p>
+        <p><code>memprove --help</code> 列出所有命令；<a href="/docs/guide/">The agent's guide</a>（英文）是 agent 的手册，从安装讲到接手。</p>
+        <p>
+          只有 <code>git status --short</code> 没有列出未跟踪文件时，一次运行才能支持 fact。Python 的测试运行会留下 <code>__pycache__/</code>：在你要引用的那次运行之前，把它加进
+          <code>.gitignore</code> 或 <code>.git/info/exclude</code>，否则 fact 会是 <code>unconfirmed</code>。
+        </p>
+
+        <h2 id="pack">下一个会话读到什么</h2>
+        <p>
+          下面是 <a href="https://github.com/memprove/memprove.github.io/tree/main/demo/tinyini">tinyini</a>（一个小的 Python 仓库）里一次真实会话在第一个 checkpoint
+          之后的 Pack（<a href="/how-it-works/#every-command-as-recorded">这次会话的每条命令</a>，英文）：
+        </p>
+        <CodeTerm title="memprove resume --pack" code={pack} output label="一次真实会话的 Context Pack" />
+        <ul>
+          <li><code>Task「…」 (in_progress): verified</code>：Task 的判定，以及各类陈述的数量。</li>
+          <li><code>Sessions:</code> 和 <code>Session 1 … not ended</code>：还没结束的 Session，接手规则看的就是这几行。</li>
+          <li><code>Last passed:</code>：最近一次通过的测试运行，和它对应的 commit。</li>
+          <li><code>Can:</code>：接下来能做什么，以及每一步需要的权限。</li>
+          <li><code>#1 verified: …</code>：每条有效陈述的判定，和它的 Evidence 绑定的 commit。</li>
+          <li><code>Omitted:</code>：在预算内省略了什么，以及怎样读到全文。</li>
+        </ul>
+
+        <h2 id="takeover">接手</h2>
+        <p>
+          Pack 会列出每个还没结束的 Session。会话发现另一个 agent 留下的 Session 时，只有同时满足三条才会把它作为 abandoned 结束：它的 agent 不是你；它看起来已经不在了，因为它最后一次写入超过
+          15 分钟，或者派发它的 Session 已经结束；它不是你自己的父 Session。否则那个 Session 保持打开，你照常 <code>begin</code>，本会话的第一个 checkpoint 会记录一条 open
+          item，说明另一个 Session 可能还在工作。hook 的开场会告诉你你的名字、当前的 UTC 时间和你的父 Session，所以这条规则不需要读取你的环境。
+        </p>
+        <p>
+          <code>memproved</code> 会记录谁结束了谁。声明了 <code>sub_agent</code> 角色的 Session 不能记录 Decision、不能完成 Task，也不能推翻其他 agent 的 fact，这些由负责编排的会话或者人来做。接手评测（<a
+            href={`${repo}/blob/main/docs/takeover-eval.md`}>docs/takeover-eval.md</a
+          >，英文）用真实的客户端跑六个场景，并给归档打分。
+        </p>
+
+        <h2 id="next">下一步</h2>
+        <ul>
+          <li><a href="/docs/guide/">The agent's guide</a>（英文）：所有命令、Pack、hook、MCP server 和退出码。</li>
+          <li><a href="/how-it-works/">How it works</a>（英文）：daemon、ledger、Evidence 和判定，附一次录制下来的会话。</li>
+          <li><a href="/llms.txt">llms.txt</a>（英文）：同样的安装步骤，写给 coding agent 照着做。</li>
+          <li>问题和 bug：<a href={`${repo}/issues`}>GitHub issues</a>。</li>
+        </ul>
+      </article>
+    </div>
+  </section>
+</Site>
+
+<script>
+  // Copy buttons: copy the block's commands, then say so for two seconds.
+  for (const b of document.querySelectorAll<HTMLButtonElement>('button[data-copy]')) {
+    const label = b.textContent;
+    b.addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(b.dataset.copy ?? '');
+      } catch {
+        return;
+      }
+      b.textContent = b.dataset.done ?? label;
+      setTimeout(() => (b.textContent = label), 2000);
+    });
+  }
+</script>

@@ -14,16 +14,20 @@ import { repo } from '../lib/site';
 interface Props {
   title: string;
   description: string;
-  current?: 'home' | 'about' | 'roadmap';
+  current?: 'home' | 'about' | 'roadmap' | 'zh';
   noindex?: boolean;
+  /** The page's language; the Chinese quickstart sets zh-CN. */
+  lang?: string;
+  /** Other language versions of this page, for hreflang. */
+  alternates?: { hreflang: string; href: string }[];
 }
-const { title, description, current, noindex = false } = Astro.props;
+const { title, description, current, noindex = false, lang = 'en', alternates = [] } = Astro.props;
 const canonical = new URL(Astro.url.pathname, Astro.site).href;
 const stars = repo.stars !== null && repo.stars >= 10 ? repo.stars : null;
 ---
 
 <!doctype html>
-<html lang="en">
+<html lang={lang}>
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -31,12 +35,15 @@ const stars = repo.stars !== null && repo.stars >= 10 ? repo.stars : null;
     <meta name="description" content={description} />
     {!noindex && <link rel="canonical" href={canonical} />}
     {noindex && <meta name="robots" content="noindex" />}
+    {alternates.length > 0 && <link rel="alternate" hreflang={lang} href={canonical} />}
+    {alternates.map((a) => <link rel="alternate" hreflang={a.hreflang} href={a.href} />)}
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="sitemap" href="/sitemap-index.xml" />
     <link rel="alternate" type="text/plain" title="llms.txt" href="/llms.txt" />
     <meta name="theme-color" content="#fbfaf7" />
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="memprove" />
+    <meta property="og:locale" content={lang.replace('-', '_')} />
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
     {!noindex && <meta property="og:url" content={canonical} />}
@@ -75,6 +82,7 @@ const stars = repo.stars !== null && repo.stars >= 10 ? repo.stars : null;
         <a class="navl" href="/roadmap/" aria-current={current === 'roadmap' ? 'page' : undefined}>Roadmap</a>
         <a class="navl" href="/llms.txt">llms.txt</a>
         <a class="navl" href="https://github.com/memprove/memprove">GitHub</a>
+        <a class="navl" href="/zh/" lang="zh-CN" hreflang="zh-CN" aria-current={current === 'zh' ? 'page' : undefined}>中文</a>
         <span class="mono" style="font-size: 12.5px">apache-2.0 · no cookies, no tracking</span>
       </div>
     </footer>

@@ -8,6 +8,7 @@ The website of [memprove](https://github.com/memprove/memprove): the homepage, t
 | --- | --- |
 | `/` homepage, `/about/`, `/roadmap/`, `/404` | `src/pages/` in this repository |
 | `/docs/` Quickstart | `src/fragments/quickstart.md`, with parts of memprove's `README.md` and a recorded Pack |
+| `/zh/` Chinese quickstart | `src/pages/zh/index.astro`: the Quickstart in Simplified Chinese, section by section; update it with `src/fragments/quickstart.md` |
 | `/docs/guide/…` | memprove's `docs/guide.md`, one page per `##` section |
 | `/how-it-works/` | `src/fragments/how-it-works.md` plus memprove's `docs/architecture.md` |
 | `/docs/takeover-eval/` | memprove's `docs/takeover-eval.md` |

@@ -1,5 +1,7 @@
 {{readme-intro}}
 
+简体中文：[中文快速上手](/zh/)
+
 ## 1. Install
 
 On macOS on Apple silicon, or Linux x86_64 with glibc 2.35 or later (such as Ubuntu 22.04 and Debian 12):

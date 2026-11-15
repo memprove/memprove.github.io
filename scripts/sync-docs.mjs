@@ -166,9 +166,10 @@ const pages = [];
  * route: the page's URL path ('/docs/guide/context-pack/').
  * raw: where its Markdown is served ('/docs/guide/context-pack.md').
  */
-function writePage({ route, file, title, body, description, sidebar, group, sourcePath }) {
+function writePage({ route, file, title, body, description, sidebar, group, sourcePath, head }) {
   const source = sourcePath ? `${REPO_URL}/blob/${commit}/${sourcePath}` : undefined;
-  const fm = frontmatter({ title, description, sidebar, editUrl: false });
+  // head: extra <head> tags as Starlight frontmatter, already YAML (one entry per line).
+  const fm = frontmatter({ title, description, sidebar, editUrl: false }).replace(/---\n$/, head ? `head:\n${head}\n---\n` : '---\n');
   const note = sourcePath
     ? `\n\n<p class="mp-source">From <a href="${source}"><code>${sourcePath}</code></a> at <code>${commit.slice(0, 12)}</code> · <a href="${rawPath(route)}">Markdown</a></p>\n`
     : '';
@@ -214,6 +215,11 @@ writePage({
   description: `Install memprove ${release.version}, enable a repository with memprove init, and record a first fact on a passing test run.`,
   body: fill(fragment('quickstart.md')),
   group: 'Docs',
+  // The Chinese quickstart (src/pages/zh/index.astro) is this page's other language version.
+  head: [
+    `  - { tag: link, attrs: { rel: alternate, hreflang: en, href: '${SITE_URL}/docs/' } }`,
+    `  - { tag: link, attrs: { rel: alternate, hreflang: zh-CN, href: '${SITE_URL}/zh/' } }`,
+  ].join('\n'),
 });
 
 // ---- The agent's guide, one page per ## section
