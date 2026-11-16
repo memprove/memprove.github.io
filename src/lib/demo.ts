@@ -55,3 +55,10 @@ export function commits(): { sha: string; subject: string }[] {
 }
 
 export const about = () => transcript('00-about').split('\n').slice(0, 3);
+
+/** The memprove version the demo was recorded with ("memprove 0.1.0 (…)" → "0.1.0"), not the current release. */
+export function recordedVersion(): string {
+  const v = about()[0].match(/^memprove (\S+) /)?.[1];
+  if (!v) throw new Error('demo/00-about.txt does not start with "memprove <version> "');
+  return v;
+}
