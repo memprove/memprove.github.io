@@ -3,7 +3,7 @@ import Site from '../layouts/Site.astro';
 import Term from '../components/Term.astro';
 import agent from '../data/agent-setup.json';
 import { release, installCommands } from '../lib/site';
-import { facts, head, run, commits, line, output, transcript, type Verdict } from '../lib/demo';
+import { facts, head, run, commits, line, output, transcript, recordedVersion, type Verdict } from '../lib/demo';
 
 const short = (sha: string) => sha.slice(0, 12);
 const sym: Record<Verdict, string> = { verified: '■', stale: '▨', unconfirmed: '□', tampered: '▩' };
@@ -191,7 +191,7 @@ const ld = {
           </div>
         </figure>
         <p class="cap" style="font-size: 12px">
-          Recorded with memprove {release.version} and pytest by <a href="https://github.com/memprove/memprove.github.io/blob/main/demo/record.sh">demo/record.sh</a>.
+          Recorded with memprove {recordedVersion()} and pytest by <a href="https://github.com/memprove/memprove.github.io/blob/main/demo/record.sh">demo/record.sh</a>.
           Nobody edits a fact: a commit moves HEAD, the rule re-judges each one, a passing rerun brings them back.
           <a href="/how-it-works/">The full output →</a>
         </p>
