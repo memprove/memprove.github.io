@@ -53,7 +53,7 @@ From inside the repository's Git worktree (it needs at least one commit):
 memprove init
 ```
 
-`init` registers the Project, keeps memprove's own files out of your Evidence through `.git/info/exclude`, writes the configuration of the clients it finds (Claude Code: the SessionStart hook in `.claude/settings.local.json` and `.mcp.json`; Codex: `~/.codex/config.toml` and a note in `AGENTS.md`; Cursor: `.cursor/mcp.json` and a rule), and ends with `memprove doctor`. Running it again changes nothing. `--client` names the clients; `--allow-tools` also writes Claude Code's allow rules for the MCP server and `memprove run`. Before the first Session, `doctor` prints two `WARN` lines (`workspace`, `ledger`); both pass after it. [Enabling memprove in a project](/docs/guide/enabling-memprove-in-a-project/) has the details.
+`init` registers the Project, keeps memprove's own files out of your Evidence through `.git/info/exclude`, writes the configuration of the clients it finds (Claude Code: the SessionStart hook in `.claude/settings.local.json` and `.mcp.json`; Codex: `~/.codex/config.toml`, the hook in `.codex/hooks.json` and a note in `AGENTS.md`; Cursor: `.cursor/mcp.json`, the hook in `.cursor/hooks.json` and a rule; TRAE and TRAE CN: `.trae/hooks.json`, `.trae/mcp.json` and a rule), and ends with `memprove doctor`. Running it again changes nothing. `--client` names the clients; `--allow-tools` also writes Claude Code's allow rules for the MCP server and `memprove run`. Before the first Session, `doctor` prints two `WARN` lines (`workspace`, `ledger`); both pass after it. [Enabling memprove in a project](/docs/guide/enabling-memprove-in-a-project/) has the details.
 
 ## 3. One session, five commands
 

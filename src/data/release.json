@@ -1,8 +1,8 @@
 {
-  "version": "0.2.1",
-  "tag": "v0.2.1",
-  "date": "2026-11-16",
-  "base": "https://github.com/memprove/memprove/releases/download/v0.2.1",
+  "version": "0.3.0",
+  "tag": "v0.3.0",
+  "date": "2026-11-21",
+  "base": "https://github.com/memprove/memprove/releases/download/v0.3.0",
   "targets": {
     "macos": { "label": "macOS (Apple silicon)", "triple": "aarch64-apple-darwin" },
     "linux": { "label": "Linux x86_64 (glibc 2.35+)", "triple": "x86_64-unknown-linux-gnu" }

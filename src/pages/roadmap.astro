@@ -16,10 +16,14 @@ import { release } from '../lib/site';
 
         <h2>Now: {release.version}</h2>
         <p>
-          The daemon and the CLI, the Claude Code SessionStart hook, the MCP server with ten tools, <code>memprove init</code> for
-          Claude Code, Codex and Cursor, the unattended takeover rule and its evaluation, and <code>memprove eval</code>, which runs
-          a coding agent on the repository's own tasks and measures whether memprove's memory helps it. The ledger format, the control API and
-          the Pack's line set are stable. <a href="/changelog/">The changelog</a> has the details.
+          The daemon and the CLI, the session-start hook for Claude Code, Codex and Cursor, the MCP server with ten tools,
+          <code>memprove init</code> for Claude Code, Codex, Cursor and TRAE, the unattended takeover rule and its evaluation, and
+          <code>memprove eval</code>, which runs a coding agent on the repository's own tasks and measures whether memprove's memory
+          helps it. New in 0.3.0: <code>memprove verify</code> checks that work an agent says is done is done,
+          <code>memprove policy</code> gives the three clients one set of tool rules, with a scan for secrets,
+          <code>memprove report</code> shows what one session cost and did, and <code>memprove import</code> reads the instruction
+          files a repository already has. The ledger format, the control API and the Pack's line set are stable.
+          <a href="/changelog/">The changelog</a> has the details.
         </p>
 
         <h2>Open limits</h2>
@@ -28,6 +32,7 @@ import { release } from '../lib/site';
           <li>Test case counts are read from cargo and pytest output. Other runners pass <code>--test --test-cases &lt;N&gt;</code>.</li>
           <li>The repository state covers tracked files, the index, HEAD and the branch. Ignored files and environment variables are not part of it.</li>
           <li>The macOS binaries are not notarized.</li>
+          <li>The hooks are tested against each client's documented hook input. In a real client, only the policy hook in Codex has been run; the session-start hooks in Codex and Cursor, Cursor's policy hook and everything for TRAE have not.</li>
         </ul>
 
         <h2>Next on memprove.dev</h2>
