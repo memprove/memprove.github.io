@@ -127,8 +127,8 @@ const pack = transcript('05-pack-verified');
         <CodeTerm title="bash" code="memprove init" copy="复制" />
         <p>
           <code>init</code> 会注册这个 Project；通过 <code>.git/info/exclude</code> 把 memprove 自己的文件排除在 Evidence 之外；为它找到的客户端写配置（Claude
-          Code：<code>.claude/settings.local.json</code> 里的 SessionStart hook 和 <code>.mcp.json</code>；Codex：<code>~/.codex/config.toml</code> 和
-          <code>AGENTS.md</code> 里的一段说明；Cursor：<code>.cursor/mcp.json</code> 和一条 rule）；最后运行 <code>memprove doctor</code>。再运行一次不会改变任何东西。<code
+          Code：<code>.claude/settings.local.json</code> 里的 SessionStart hook 和 <code>.mcp.json</code>；Codex：<code>~/.codex/config.toml</code>、<code>.codex/hooks.json</code> 里的 hook 和
+          <code>AGENTS.md</code> 里的一段说明；Cursor：<code>.cursor/mcp.json</code>、<code>.cursor/hooks.json</code> 里的 hook 和一条 rule；TRAE 和 TRAE CN：<code>.trae/hooks.json</code>、<code>.trae/mcp.json</code> 和一条 rule）；最后运行 <code>memprove doctor</code>。再运行一次不会改变任何东西。<code
             >--client</code
           > 指定客户端；<code>--allow-tools</code> 还会写入 Claude Code 对 MCP server 和 <code>memprove run</code> 的 allow 规则。第一个 Session 之前，<code
             >doctor</code
@@ -146,7 +146,7 @@ const pack = transcript('05-pack-verified');
         <p>
           <code>resume --pack</code> 打印 Context Pack：Task 的判定、各个 Session、最近一次通过的运行、接下来能做什么、每条有效陈述的判定和它绑定的 commit，以及需要重新运行什么。<code
             >end</code
-          > 结束 Session。在 Claude Code 里，hook 会在每个会话开始时注入 Pack；MCP 工具能做命令能做的事，只有运行命令除外：测试总是用 <code>memprove run</code> 记录。
+          > 结束 Session。在 Claude Code、Codex、Cursor 和 TRAE 里，hook 会在每个会话开始时注入 Pack；MCP 工具能做命令能做的事，只有运行命令除外：测试总是用 <code>memprove run</code> 记录。
         </p>
         <p><code>memprove --help</code> 列出所有命令；<a href="/docs/guide/">The agent's guide</a>（英文）是 agent 的手册，从安装讲到接手。</p>
         <p>
