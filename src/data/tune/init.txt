@@ -1,0 +1,14 @@
+memprove-tune: running each task's tests before and after its commit; this can take a while
+5 tasks written to .tune/tasks:
+  mined-5465ce1  pricing: free shipping from 7500 cents
+      check: python3 -m unittest discover -s tests
+  mined-5bbafe7  rate limit: 60 requests per minute per key after the 2026-09-30 incident
+      check: python3 -m unittest discover -s tests
+  mined-14ceeb4  pricing: zone D for the islands
+      check: python3 -m unittest discover -s tests
+  mined-40aa752  cli: --json prints the quote as JSON
+      check: python3 -m unittest discover -s tests
+  mined-463cfbe  add per-key rate limiting and the free-shipping threshold
+      check: python3 -m unittest discover -s tests
+Read the prompts before you trust them: each is a commit message, and it may say too little to do the work from.
+Next: `memprove-tune scan` lists the units of the configuration, and `memprove-tune prune --dry-run` shows the plan and its cost.

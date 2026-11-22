@@ -19,6 +19,9 @@ const required = [
   'about/index.html',
   'roadmap/index.html',
   'zh/index.html',
+  'tune/index.html',
+  'zh/tune/index.html',
+  'tune/install.sh',
   'docs/index.html',
   'docs/index.md',
   'docs/guide/index.html',
@@ -38,10 +41,12 @@ const required = [
 ];
 for (const f of required) if (!existsSync(join(dist, f))) fail(`missing ${f}`);
 if (existsSync(join(dist, 'CNAME')) && readFileSync(join(dist, 'CNAME'), 'utf8').trim() !== 'memprove.dev') fail('CNAME is not memprove.dev');
-// The installer is served as written: a POSIX sh script whose last line runs main (scripts/test-install.sh tests it).
-if (existsSync(join(dist, 'install.sh'))) {
-  const sh = readFileSync(join(dist, 'install.sh'), 'utf8');
-  if (!sh.startsWith('#!/bin/sh\n') || !sh.endsWith('\nmain "$@"\n')) fail('install.sh does not start with #!/bin/sh or does not end with main "$@"');
+// The installers are served as written: POSIX sh scripts whose last line runs main. scripts/test-install.sh tests
+// memprove's; memprove-tune's is a copy of scripts/install.sh in its repository, which tests it there.
+for (const f of ['install.sh', 'tune/install.sh']) {
+  if (!existsSync(join(dist, f))) continue;
+  const sh = readFileSync(join(dist, f), 'utf8');
+  if (!sh.startsWith('#!/bin/sh\n') || !sh.endsWith('\nmain "$@"\n')) fail(`${f} does not start with #!/bin/sh or does not end with main "$@"`);
 }
 
 // ---- collect HTML pages and their ids

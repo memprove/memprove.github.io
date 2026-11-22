@@ -1,0 +1,455 @@
+---
+// memprove-tune's product page. Every terminal block and figure shows what the tool printed:
+// src/data/tune/ holds the recordings and says where each one comes from.
+import Site from '../../layouts/Site.astro';
+import Term from '../../components/Term.astro';
+import CodeTerm from '../../components/CodeTerm.astro';
+import {
+  tune,
+  tuneInstallCommand,
+  tuneSourceCommand,
+  tunePluginCommand,
+  tuneTranscript,
+  tuneLine,
+  units,
+  unitTokens,
+  arms,
+  run3,
+} from '../../lib/tune';
+
+const repo = tune.repo;
+const doc = (path: string) => `${repo}/blob/main/${path}`;
+
+// ---- hero: install, then the first line scan prints
+const scanFirst = tuneLine('scan', /^\d+ configuration file/);
+
+// ---- fig. 1: the file scan read, with its units
+const file = tuneTranscript('claude-md').split('\n');
+const fig1 = file.map((text, i) => {
+  const n = i + 1;
+  const unit = units.find((u) => u.first === n);
+  return { n: String(n).padStart(2, '0'), text, unit };
+});
+
+// ---- fig. 3: the recorded report of run 1
+const ab = tuneTranscript('ab');
+const [baseline, control, without] = arms();
+const trials = baseline.of + control.of + without.of;
+const spent = tuneLine('ab', /^Spent /).match(/^Spent (\$[\d.]+)/)?.[1] ?? '';
+const abCommand = 'memprove-tune ab --drop CLAUDE.md --rounds 5 --max-cost 7.50';
+
+// ---- the plan
+const plan = tuneTranscript('plan');
+const planCommand = 'memprove-tune prune --dry-run --cost-per-trial 0.11 --max-cost 30';
+
+const pct = (a: number, b: number) => `${((a / b) * 100).toFixed(1)} %`;
+
+const ld = {
+  '@context': 'https://schema.org',
+  '@type': 'SoftwareApplication',
+  name: 'memprove-tune',
+  applicationCategory: 'DeveloperApplication',
+  operatingSystem: 'macOS, Linux',
+  softwareVersion: tune.version,
+  license: 'https://www.apache.org/licenses/LICENSE-2.0',
+  url: 'https://memprove.dev/tune/',
+  downloadUrl: `${repo}/releases/tag/${tune.tag}`,
+  codeRepository: repo,
+  offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
+  description:
+    'Tests whether the instructions you give a coding agent earn their place: A/B experiments on your own repository, judged only by your tests.',
+};
+---
+
+<Site
+  title="memprove-tune: find out which agent instructions earn their place"
+  description="memprove-tune runs your coding agent on tasks from your own repository with a part of CLAUDE.md and without it, and lets your tests decide: keep, removable, or not enough evidence."
+  current="tune"
+  alternates={[
+    { hreflang: 'zh-CN', href: 'https://memprove.dev/zh/tune/' },
+    { hreflang: 'x-default', href: 'https://memprove.dev/tune/' },
+  ]}
+>
+  <script type="application/ld+json" slot="head" set:html={JSON.stringify(ld)} />
+
+  <!-- hero, fig. 1 -->
+  <section style="padding: clamp(56px, 8vw, 88px) 0 clamp(64px, 9vw, 96px)">
+    <div class="wrap two top">
+      <div class="stack" style="gap: 24px">
+        <p class="cap">[ memprove-tune · v{tune.version} · open source · rust · apache-2.0 ]</p>
+        <h1 class="hero">Find out which agent instructions earn their place.</h1>
+        <p class="lead">
+          Every line of <span class="code">CLAUDE.md</span> is read in every session, and nobody knows which lines help.
+          memprove-tune runs your coding agent on tasks from your own repository with a part of the configuration and
+          without it. Only your tests decide.
+        </p>
+
+        <Term title="~/your-repo" id="install">
+          <div class="tbody">
+            <div class="ln pane-label"># {tune.targets.macos.label} · {tune.targets.linux.label}</div>
+            <div class="ln hang"><span class="glow">$</span> {tuneInstallCommand}</div>
+            <div class="ln hang dim"># checks the release's SHA-256, installs one file into ~/.memprove-tune/bin</div>
+            <div class="ln" style="margin-top: 10px"><span class="glow">❯</span> memprove-tune scan</div>
+            <div class="ln hang dim">{scanFirst}</div>
+            <div class="ln hang dim" style="margin-top: 6px"># or tell your agent: "set up memprove-tune in this repository"</div>
+          </div>
+        </Term>
+
+        <div class="btns">
+          <a class="btn" href={`${repo}#readme`}>Read the README</a>
+          <a class="btn2" href={repo}>View on GitHub</a>
+        </div>
+        <p style="margin: 0; font-size: 14px; color: var(--mp-muted)">
+          A tool of its own: it does not need memprove. Real runs use
+          <span style="color: var(--mp-fg); font-weight: 500">Claude Code</span>.
+        </p>
+      </div>
+
+      <div class="stack" style="gap: 14px">
+        <figure class="panel" style="margin: 0" aria-labelledby="fig1-cap">
+          <div class="phead">
+            <span id="fig1-cap">[ fig. 1 — a CLAUDE.md, as scan reads it ]</span>
+            <span>{units.length} units · {unitTokens} tokens in every session</span>
+          </div>
+          <div class="lines notes units">
+            {
+              fig1.map((r) => (
+                <>
+                  <span class="num">{r.n}</span>
+                  <span class={`l ${r.unit ? 'uhead' : ''}`}>{r.text || ' '}</span>
+                  <span class="note">{r.unit ? `${r.unit.id.replace('CLAUDE.md', '')} · ${r.unit.tokens} tokens` : ''}</span>
+                </>
+              ))
+            }
+          </div>
+          <div class="pfoot">Which of these four does the agent need? Reading them will not tell you. Running the agent with and without each one will.</div>
+        </figure>
+        <p class="cap" style="font-size: 12px">
+          The <span class="mono">CLAUDE.md</span> of parcelpost, a small repository made up for the first run with a real agent.
+          A unit is a section of <span class="mono">CLAUDE.md</span> or <span class="mono">AGENTS.md</span>, a file under
+          <span class="mono">.claude/rules</span>, or a skill. <span class="mono">scan</span> runs nothing and calls no model.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- the problem -->
+  <section class="sec">
+    <div class="wrap two">
+      <div class="stack">
+        <p class="cap">[ 01 · the problem ]</p>
+        <h2 class="h2">Instructions pile up. Nobody dares to remove one.</h2>
+        <p class="txt">
+          After every mistake, a line goes into <span class="code">CLAUDE.md</span>, a rule file or a skill. Each one is read in
+          every session, costs tokens every time, and may pull the agent the wrong way. Whether a line still helps is a
+          guess, so the file only grows.
+        </p>
+      </div>
+      <figure class="panel" style="margin: 0">
+        <div class="phead"><span>[ fig. 2 — three ways to decide ]</span><span>who judges</span></div>
+        <dl class="rule">
+          <dt>A</dt><dd><span class="v-nee">□</span> Read it and guess. <span class="who">You judge, with no evidence.</span></dd>
+          <dt>B</dt><dd><span class="v-nee">□</span> Ask a model whether the line is good. <span class="who">A model grades a model.</span></dd>
+          <dt>C</dt><dd><span class="v-keep">■</span> Run the agent with the line and without it. <span class="who">Your tests judge.</span></dd>
+        </dl>
+        <div class="pfoot">memprove-tune does C, and says how sure it is.</div>
+      </figure>
+    </div>
+  </section>
+
+  <!-- how it works -->
+  <section class="sec" id="how">
+    <div class="wrap" style="display: flex; flex-direction: column; gap: 40px">
+      <div class="stack" style="max-width: 44em">
+        <p class="cap">[ 02 · how it works ]</p>
+        <h2 class="h2">An experiment on your own repository.</h2>
+      </div>
+      <div class="grid3">
+        <div class="panel">
+          <div class="phead"><span class="k-ok">01 · tasks from your history</span><span>→ 02</span></div>
+          <div class="pbody">
+            <code class="cmd">memprove-tune init --verify</code>
+            <p class="txt sm">
+              A commit that changed a test and code becomes a task. The agent starts from its parent, is asked for what the
+              commit did, and is judged by the commit's tests, which it never sees. No model is called.
+            </p>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="phead"><span class="k-ok">02 · arms take turns</span><span>→ 03</span></div>
+          <div class="pbody">
+            <code class="cmd">memprove-tune ab --drop UNIT</code>
+            <p class="txt sm">
+              Today's configuration, the same one a second time as a control, and the one without the unit run the same
+              tasks round by round. Every trial starts from a clean copy of the repository.
+            </p>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="phead"><span class="k-ok">03 · every unit at once</span><span>→ patch</span></div>
+          <div class="pbody">
+            <code class="cmd">memprove-tune prune</code>
+            <p class="txt sm">
+              Drops each unit alone, then drops everything that came out removable together and checks that on tasks the
+              search did not use. Nothing changes until you apply the patch it writes.
+            </p>
+          </div>
+        </div>
+      </div>
+      <figure class="panel" style="margin: 0">
+        <div class="phead"><span>[ fig. 3 — the three verdicts ]</span><span>a rule decides, not a model</span></div>
+        <div class="verdicts">
+          <div class="verdict">
+            <span class="vword v-keep"><span class="s">■</span> KEEP</span>
+            <p class="txt sm">
+              The agent passes less often without the unit: the pairs that changed sides are too one-sided to be chance
+              (exact sign test, 5 %) and more than the control's.
+            </p>
+          </div>
+          <div class="verdict">
+            <span class="vword v-rem"><span class="s">□</span> REMOVABLE</span>
+            <p class="txt sm">
+              Without the unit the pass rate is at most 10 points lower, with 95 % confidence (exact binomial bounds). That
+              takes about 30 pairs that agree.
+            </p>
+          </div>
+          <div class="verdict">
+            <span class="vword v-nee"><span class="s">▨</span> NOT ENOUGH EVIDENCE</span>
+            <p class="txt sm">
+              Anything else. The tool does not guess when the trials cannot tell; the same command with more rounds goes on
+              from where it stopped.
+            </p>
+          </div>
+        </div>
+      </figure>
+    </div>
+  </section>
+
+  <!-- a real run -->
+  <section class="sec">
+    <div class="wrap" style="display: flex; flex-direction: column; gap: 28px">
+      <div class="two top">
+        <div class="stack">
+          <p class="cap">[ 03 · a real run ]</p>
+          <h2 class="h2">A planted fact, found.</h2>
+        </div>
+        <div class="stack">
+          <p class="txt">
+            The notes of fig. 1 hold one thing a task needs and the code does not say: the port number in line 15. In the
+            first run with a real agent they were still one list, and the whole file was dropped. With Claude Code,
+            {trials} trials and {spent}: the baseline passed {baseline.passed} of {baseline.of}, the control {control.passed} of
+            {control.of}, and the arm without the file {without.passed} of {without.of}. The control differed from the baseline
+            in no pair.
+          </p>
+          <ul class="list muted">
+            <li>— what it shows: when a unit holds something a task needs, the tool finds it</li>
+            <li>— what it does not: the five pairs are one task in five rounds, and the effect was put there on purpose</li>
+          </ul>
+        </div>
+      </div>
+      <div class="stack keep-cols" style="gap: 10px">
+        <CodeTerm title="memprove-tune ab — parcelpost" code={`${abCommand}\n${ab}`} output label="fig. 4: the report of the first run with a real agent" />
+        <p class="cap" style="font-size: 12px">
+          [ fig. 4 ] The report as the tool printed it on 2026-11-18; the command is shown without its options for the task
+          files, the model and the number of trials at a time.
+          <a href={doc('docs/validation.md')}>Every run with a real agent, and what it does not show →</a>
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- public repositories -->
+  <section class="sec">
+    <div class="wrap" style="display: flex; flex-direction: column; gap: 28px">
+      <div class="stack" style="max-width: 46em">
+        <p class="cap">[ 04 · on public repositories ]</p>
+        <h2 class="h2">Three repositories, the whole configuration against none.</h2>
+        <p class="txt">
+          Tasks mined from each repository's history, every prompt taken from a pull request, one round, {run3.trials} trials,
+          {run3.cost}. The rules were written down before the run and not changed after it. In none of the three did the
+          configuration show a benefit the tests could see; sessions without it cost 8 to 12 % less a trial.
+        </p>
+      </div>
+      <div class="panel scroll-x">
+        <table class="runs">
+          <thead>
+            <tr>
+              <th scope="col">repository</th><th scope="col">tasks</th><th scope="col">with its configuration</th><th scope="col">without any</th
+              ><th scope="col">at most this much lower (95 %)</th><th scope="col">verdict</th><th scope="col">cost</th>
+            </tr>
+          </thead>
+          <tbody>
+            {
+              run3.rows.map((r) => (
+                <tr>
+                  <td class="mono" style="font-size: 14px">{r.repo}</td>
+                  <td class="mono">{r.tasks}</td>
+                  <td class="mono">{r.base} · {pct(r.base, r.tasks)}</td>
+                  <td class="mono">{r.bare} · {pct(r.bare, r.tasks)}</td>
+                  <td class="mono">{r.bound} points</td>
+                  <td class="mono"><span class={r.verdict === 'no worse' ? 'v-rem' : 'v-nee'}>{r.verdict === 'no worse' ? '□' : '▨'}</span> {r.verdict}</td>
+                  <td class="mono">{r.cost}</td>
+                </tr>
+              ))
+            }
+          </tbody>
+        </table>
+      </div>
+      <p class="cap" style="font-size: 12px">
+        Claude Code 2.1.310 with claude-opus-5-5, 2026-11-19 and 11-20. "No worse" is a bound, not "useless": the pass rate is at
+        most 10 points lower with 95 % confidence, on these tasks. Rules on style, commit messages and process cannot fail a
+        test, so they cannot show here. Single sections and skills have not been tested on a real repository yet.
+      </p>
+    </div>
+  </section>
+
+  <!-- cost first -->
+  <section class="sec">
+    <div class="wrap two top">
+      <div class="stack">
+        <p class="cap">[ 05 · the cost is stated first ]</p>
+        <h2 class="h2">You see the plan and the bill before anything runs.</h2>
+        <p class="txt">
+          A verdict costs real runs of your agent. The plan says how many trials there are, how many pairs each unit gets
+          and how many a verdict needs. A run stops at the cap you set, and the same command goes on from there.
+        </p>
+        <ul class="list muted">
+          <li>— a whole configuration against none took 88 to 90 tasks, $84 to $93 and three to eight hours a repository in our runs</li>
+          <li>— <span class="mono">prune</span> runs one such arm for every unit; <span class="mono">--top K</span> tests the K largest</li>
+          <li>— stopped at the cap, <span class="mono">prune</span> concludes nothing: no patch and no verdict</li>
+          <li>— nothing leaves your machine except what your agent itself sends</li>
+        </ul>
+      </div>
+      <div class="stack" style="gap: 10px">
+        <CodeTerm title="memprove-tune prune — parcelpost" code={`${planCommand}\n${plan}`} output label="fig. 5: the plan of a prune run" />
+        <p class="cap" style="font-size: 12px">[ fig. 5 ] The plan for the four units of fig. 1, with your estimate of a trial's cost. Nothing was run.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- your agent sets it up -->
+  <section class="sec">
+    <div class="wrap two">
+      <div class="stack">
+        <p class="cap">[ 06 · no integration project ]</p>
+        <h2 class="h2">Your agent sets it up.</h2>
+        <p class="txt">
+          The plugin holds one skill. Asked to set memprove-tune up, your coding agent installs it, lists your configuration,
+          writes the first tasks from your history and shows the plan of an experiment. It starts no experiment unless you
+          ask and name the cap.
+        </p>
+        <a class="more" href={doc('plugins/memprove-tune/README.md')}>Codex, Cursor and other agents →</a>
+      </div>
+      <Term title="claude code — ~/your-repo" id="agent">
+        <div class="tbody" style="line-height: 1.85">
+          <div class="ln hang"><span class="glow">❯</span> {tunePluginCommand}</div>
+          <div class="ln hang" style="margin-top: 8px"><span class="glow">❯</span> Set up memprove-tune in this repository.</div>
+          <div class="ln hang dim" style="margin-top: 8px"># the skill runs: scan · init --verify · prune --dry-run</div>
+          <div class="ln hang dim"># none of them starts an agent or calls a model</div>
+        </div>
+      </Term>
+    </div>
+  </section>
+
+  <!-- limits and closing -->
+  <section class="sec">
+    <div class="wrap" style="display: flex; flex-direction: column; gap: 56px">
+      <div class="two top">
+        <div class="stack">
+          <p class="cap">[ 07 · status ]</p>
+          <h2 class="h2">v{tune.version}, and honest about its limits.</h2>
+          <p class="txt">Binaries for {tune.targets.macos.label} and {tune.targets.linux.label}. Elsewhere, build it with Rust 1.89 or later:</p>
+          <code class="cmd">{tuneSourceCommand}</code>
+          <a class="more" href={doc('CHANGELOG.md')}>Changelog →</a>
+        </div>
+        <div class="panel">
+          <div class="phead"><span>[ known limits ]</span><span>v{tune.version}</span></div>
+          <div class="lines" style="font-family: var(--mp-font-serif); font-size: 16.5px; line-height: 1.5; row-gap: 10px; color: var(--mp-body)">
+            <span class="num mono" style="font-size: 13px">01</span><span>Real runs support Claude Code only.</span>
+            <span class="num mono" style="font-size: 13px">02</span><span>A verdict holds for the tasks, the agent version and the model it was measured with. It does not carry over to others.</span>
+            <span class="num mono" style="font-size: 13px">03</span><span>"Removable" means no measurable loss on these tasks, not useless everywhere: a task that never touches what a unit is about cannot show its worth.</span>
+            <span class="num mono" style="font-size: 13px">04</span><span><span class="code">prune</span> tests each unit alone. Two units that say the same thing both read removable; the final check catches that and writes no patch.</span>
+            <span class="num mono" style="font-size: 13px">05</span><span>Tasks the baseline mostly fails make everything look removable; <span class="code">prune</span> warns when the baseline passes fewer than half its trials.</span>
+            <span class="num mono" style="font-size: 13px">06</span><span>Token counts are estimates, about four characters to a token.</span>
+          </div>
+        </div>
+      </div>
+
+      <Term title="memprove-tune — ~/your-repo" id="start" class="closing-term">
+        <div class="closing">
+          <h2 class="h2" style="font-size: clamp(28px, 3vw, 40px)">Stop guessing which instructions help.</h2>
+          <div class="tbody" style="text-align: left; padding: 0">
+            <div class="ln hang"><span class="glow">$</span> {tuneInstallCommand}</div>
+          </div>
+          <div class="btns" style="justify-content: center">
+            <a class="btn" href={`${repo}#readme`}>Get started</a>
+            <a class="btn2" href="/zh/tune/" lang="zh-CN" hreflang="zh-CN">中文快速上手</a>
+          </div>
+        </div>
+      </Term>
+    </div>
+  </section>
+</Site>
+
+<style>
+  /* memprove-tune's verdict marks are ink, not memprove's four verdict colours. */
+  .v-keep {
+    color: var(--mp-fg);
+  }
+  .v-rem {
+    color: var(--mp-muted);
+  }
+  .v-nee {
+    color: var(--mp-faint);
+  }
+  .units {
+    font-size: 12.5px;
+    line-height: 1.7;
+  }
+  .units .uhead {
+    color: var(--mp-fg);
+    font-weight: 600;
+  }
+  .units .l {
+    color: var(--mp-body);
+  }
+  .rule .who {
+    display: block;
+    color: var(--mp-muted);
+    font-family: var(--mp-font-mono);
+    font-size: 12.5px;
+  }
+  /* Seven columns: on a narrow screen the table keeps its shape and its panel scrolls sideways. */
+  .runs {
+    width: 100%;
+    min-width: 920px;
+    border-collapse: collapse;
+    font-size: 14.5px;
+  }
+  .runs th {
+    text-align: left;
+    padding: 10px 14px;
+    font-weight: 400;
+    border-bottom: 1px solid var(--mp-line);
+    font-family: var(--mp-font-mono);
+    font-size: 12px;
+    color: var(--mp-muted);
+  }
+  .runs td {
+    padding: 14px;
+    border-bottom: 1px solid var(--mp-line);
+    white-space: nowrap;
+  }
+  .runs tr:last-child td {
+    border-bottom: 0;
+  }
+</style>
+
+<style is:global>
+  /* A report with a table keeps its columns and scrolls sideways when the block is narrow. */
+  .keep-cols .tbody .ln.hang {
+    white-space: pre;
+    padding-left: 0;
+    text-indent: 0;
+  }
+</style>

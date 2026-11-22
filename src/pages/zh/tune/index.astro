@@ -1,0 +1,254 @@
+---
+// memprove-tune's quickstart in Simplified Chinese. It follows the README of memprove/memprove-tune
+// section by section; commands, output and the words the tool prints stay in English, as it prints them.
+import Site from '../../../layouts/Site.astro';
+import CodeTerm from '../../../components/CodeTerm.astro';
+import { tune, tuneInstallCommand, tuneSourceCommand, tunePluginCommand, tuneTranscript } from '../../../lib/tune';
+
+const v = tune.version;
+const { macos, linux } = tune.targets;
+const repo = tune.repo;
+const doc = (path: string) => `${repo}/blob/main/${path}`;
+const archive = (triple: string) => `${tune.base}/memprove-tune-${v}-${triple}.tar.gz`;
+
+const install = [
+  tuneInstallCommand,
+  '# 安装器会打印下面这一行；加 --write-profile 时它会把这一行写进 shell 配置文件',
+  'export PATH="$HOME/.memprove-tune/bin:$PATH"',
+  'memprove-tune --version',
+].join('\n');
+
+const options = [
+  '# 同时把 PATH 这一行写进 shell 配置文件',
+  `${tuneInstallCommand} -s -- --write-profile`,
+  '# 装到别的目录',
+  `${tuneInstallCommand} -s -- --prefix ~/tools/memprove-tune`,
+  '# 装指定的版本，而不是最新版',
+  `curl -fsSL https://memprove.dev/tune/install.sh | MEMPROVE_TUNE_VERSION=${v} sh`,
+].join('\n');
+
+const byHand = [
+  `# Linux 上改成 target=${linux.triple}`,
+  `target=${macos.triple}`,
+  `base=${tune.base}`,
+  `curl -LO "$base/memprove-tune-${v}-$target.tar.gz"`,
+  `curl -LO "$base/memprove-tune-${v}-$target.tar.gz.sha256"`,
+  `shasum -a 256 -c "memprove-tune-${v}-$target.tar.gz.sha256"`,
+  `tar -xzf "memprove-tune-${v}-$target.tar.gz"`,
+  'mkdir -p ~/.memprove-tune/bin',
+  `cp "memprove-tune-${v}-$target/bin/memprove-tune" ~/.memprove-tune/bin/`,
+  'export PATH="$HOME/.memprove-tune/bin:$PATH"',
+].join('\n');
+
+const scan = tuneTranscript('scan');
+const init = tuneTranscript('init');
+const plan = tuneTranscript('plan');
+const ab = tuneTranscript('ab');
+
+const run = [
+  '# 只测一个单元：去掉它，和现在的配置比',
+  "memprove-tune ab --drop 'CLAUDE.md#money' --rounds 5 --max-cost 15 --cost-per-trial 0.11",
+  '# 把每个单元都测一遍，写出补丁',
+  'memprove-tune prune --max-cost 30 --cost-per-trial 0.11',
+  '# 看完补丁再应用；在这之前仓库里什么都不会变',
+  'git apply .tune/prune.patch',
+].join('\n');
+---
+
+<Site
+  title="memprove-tune 快速上手（中文）"
+  description={`安装 memprove-tune ${v}，用 scan 看清 agent 配置的每个单元，用 init 从仓库历史里写出任务，再用 ab 和 prune 让测试判断哪些指令值得留下。`}
+  current="tune"
+  lang="zh-CN"
+  alternates={[
+    { hreflang: 'en', href: 'https://memprove.dev/tune/' },
+    { hreflang: 'x-default', href: 'https://memprove.dev/tune/' },
+  ]}
+>
+  <section class="page zh">
+    <div class="wrap">
+      <article class="prose">
+        <p class="cap">[ 中文快速上手 · memprove-tune {v} ]</p>
+        <h1 class="h2">memprove-tune 快速上手</h1>
+        <p>
+          <code>CLAUDE.md</code>、规则文件和 skill 里的每一行，coding agent 在每个会话里都要读一遍，可没人知道哪几行真的有用。memprove-tune
+          用实验来回答：它让 agent 在你自己仓库的任务上各跑一遍，一组带着配置里的某一部分，一组不带，然后只看你的测试通过没有。
+        </p>
+        <ul>
+          <li><strong>只有测试说了算。</strong>任务的检查命令退出码为 0 才算通过，不用一个模型去给另一个模型打分。</li>
+          <li><strong>三种结论。</strong>KEEP（留着）、REMOVABLE（可以去掉）、NOT ENOUGH EVIDENCE（证据不够）。试验分不出来的时候，它不猜。</li>
+          <li><strong>先报花费。</strong>运行之前先给出计划和估算的花费，花到你设的上限就停。</li>
+          <li><strong>数据不离开你的机器。</strong>发出去的只有 agent 自己本来就要发的内容。</li>
+        </ul>
+        <p class="note">
+          memprove-tune 是独立的工具，不需要安装 memprove。它的命令、输出和完整文档都是英文的，本页只翻译说明文字；unit、arm、baseline、control
+          和三种结论保留英文，因为命令和输出里就是这些词。真实运行目前只支持 Claude Code。英文页面：<a href="/tune/" hreflang="en" lang="en">memprove-tune</a>。
+        </p>
+
+        <h2 id="install">1. 安装</h2>
+        <p>支持 Apple 芯片的 macOS，以及 glibc 2.35 或更高版本的 Linux x86_64（比如 Ubuntu 22.04、Debian 12）：</p>
+        <CodeTerm title="bash" code={install} copy="复制" label="一行安装" />
+        <p>
+          <a href="/tune/install.sh">安装器</a>从最新的 <a href={`${repo}/releases`}>GitHub release</a> 里挑出适合这台机器的发布包（<code>{macos.triple}</code> 或
+          <code>{linux.triple}</code>），发布包的 SHA-256 和它的 <code>.sha256</code> 文件对不上就停下，再确认里面的程序能在这台机器上运行、报出的版本就是要装的版本，最后只放一个文件：<code
+            >~/.memprove-tune/bin/memprove-tune</code
+          >。没有 daemon，没有配置文件；不加 <code>--write-profile</code> 就不会改 shell 配置文件。再运行一次就是升级。卸载时删掉这个目录即可。选项写在
+          <code>sh -s --</code> 后面：
+        </p>
+        <CodeTerm title="bash · 选项" code={options} />
+        <p>在没有发布包的平台上（Intel 芯片的 Mac、Linux arm64、musl），安装器会直接停下，这时用 Rust 1.89 或更高版本从源码构建：</p>
+        <CodeTerm title="bash · 从源码构建" code={tuneSourceCommand} copy="复制" />
+
+        <h3 id="by-hand">手动安装</h3>
+        <p>不用安装器，同样的步骤，版本 {v}：</p>
+        <CodeTerm title="bash · 手动安装" code={byHand} copy="复制" />
+        <p>
+          安装器和手动安装都从 GitHub 下载。如果你的网络访问 GitHub 很慢，可以先用浏览器或代理下载发布包和它的 <code>.sha256</code> 文件（macOS：<a href={archive(macos.triple)}>发布包</a>、<a
+            href={`${archive(macos.triple)}.sha256`}>.sha256</a
+          >；Linux：<a href={archive(linux.triple)}>发布包</a>、<a href={`${archive(linux.triple)}.sha256`}>.sha256</a>），放进同一个目录，再从上面的
+          <code>shasum</code> 那一行接着做。macOS 上用浏览器下载的包要先清除隔离标记（<code>xattr -dr com.apple.quarantine memprove-tune-{v}-{macos.triple}</code>）。
+        </p>
+
+        <h2 id="scan">2. 先看，什么都不跑</h2>
+        <p>在仓库的 Git 工作区里运行：</p>
+        <CodeTerm title="memprove-tune scan" code={`memprove-tune scan\n${scan}`} output label="scan 的输出" />
+        <p>
+          <code>scan</code> 列出配置里的每个 unit（单元）：<code>CLAUDE.md</code> 或 <code>AGENTS.md</code> 的一节、<code>.claude/rules</code> 下的一个文件，或者
+          <code>.claude/skills</code> 下的一个 skill；还有每个 unit 在每个会话里要占多少 token，以及看起来不对劲的地方（比如本该交给格式化工具的格式规则）。它不运行任何东西，也不调用模型。<code
+            >memprove-tune scan --json</code
+          > 给出同样内容的 JSON。上面是 parcelpost（为第一次真实运行做的一个小仓库）的输出。
+        </p>
+
+        <h2 id="init">3. 从历史里写出任务</h2>
+        <p>
+          一个任务是一段提示词加一条检查命令，来自仓库真正做过的工作。<code>memprove-tune init</code> 从历史里写出最初的几个：一个同时改了测试和代码的 commit
+          变成一个任务，agent 从它的父 commit 开始，被要求做这个 commit 做的事，再由这个 commit 带来的测试判断，而这些测试 agent 是看不到的。
+        </p>
+        <CodeTerm
+          title="memprove-tune init"
+          code={`memprove-tune init --verify --test "python3 -m unittest discover -s tests"\n${init}`}
+          output
+          label="init --verify 的输出"
+        />
+        <p>
+          <code>--verify</code> 会把每个任务的测试在它的 commit 之前和之后各跑一遍，只留下「之前失败、之后通过」的任务；它不调用模型，花的只是时间。测试命令是从
+          <code>Cargo.toml</code>、<code>package.json</code>、<code>pyproject.toml</code>、<code>go.mod</code> 或 <code>Makefile</code> 里猜出来的；猜不到或猜错时用
+          <code>--test</code> 给出（全新检出需要先执行的命令用 <code>--setup</code>），上面这个仓库就是这样。
+        </p>
+        <p>
+          写出来的提示词要读一遍：每条都是一条 commit message，说得太少的任务谁也做不出来，也就说明不了配置的好坏。如果你的 commit 是 squash merge，标题以
+          <code>(#123)</code> 这样的 PR 编号结尾，可以加 <code>--prompt-from pr --named-only</code>，让提示词取自 PR 的标题和描述（需要已登录的 GitHub CLI）。任务文件也可以手写，见
+          <a href={doc('docs/tasks.md')}>docs/tasks.md</a>（英文）。
+        </p>
+
+        <h2 id="plan">4. 先看计划和花费</h2>
+        <CodeTerm
+          title="memprove-tune prune --dry-run"
+          code={`memprove-tune prune --dry-run --cost-per-trial 0.11 --max-cost 30\n${plan}`}
+          output
+          label="prune --dry-run 的输出"
+        />
+        <p>
+          <code>--dry-run</code> 只给出计划：要测几个 unit、多少个任务、多少轮、一共多少次试验，每个 unit 能得到多少个 pair（同一个任务、同一轮、带和不带这个
+          unit 各跑一次，算一对），以及一个 REMOVABLE 结论需要多少对。工具不知道一次试验要花多少钱，<code>--cost-per-trial</code> 是你自己的估算；我们的记录里，这个小仓库每次约
+          $0.10，三个公开仓库上每次约 $0.50。
+        </p>
+
+        <h2 id="run">5. 真实运行</h2>
+        <CodeTerm title="bash · 真实运行" code={run} copy="复制" />
+        <p>
+          <code>ab</code> 让 agent 在三组配置下轮流做同样的任务：现在的配置（baseline）、同样的配置再跑一遍（control，用来看两次运行之间本来会差多少）、以及去掉这个 unit
+          之后的配置。<code>prune</code> 对每个 unit 都这样做一遍，再把所有 REMOVABLE 的 unit 一起去掉，在搜索时没用过的任务上和 baseline 再比一次；通过了才写出
+          <code>.tune/prune.patch</code>。每个 unit 的结论写在 <code>.tune/verdicts.json</code> 里（这个文件是要提交的），之后 <code>scan</code>
+          会显示每条结论，以及它是否还成立：unit 的文字或任务文件一改，结论就过期。
+        </p>
+        <p>
+          这两条命令会启动 Claude Code 几十到几百次，花的是你的额度。它们开始前会先打印计划并询问；花到 <code>--max-cost</code> 就停，再运行同一条命令会接着做，已完成的试验不会重跑。花到上限而停下时，<code
+            >prune</code
+          > 不下任何结论：不写补丁，也不写结论。
+        </p>
+        <p>下面是第一次真实运行的报告（parcelpost，60 次试验，当时去掉的是整个 <code>CLAUDE.md</code>）：</p>
+        <div class="keep-cols">
+          <CodeTerm title="memprove-tune ab — parcelpost" code={`memprove-tune ab --drop CLAUDE.md --rounds 5 --max-cost 7.50\n${ab}`} output label="第一次真实运行的报告" />
+        </div>
+        <p>
+          这个文件里有一条任务需要、代码里又没写的信息（一个端口号）。去掉文件后，需要它的那个任务五轮全部失败，工具给出 KEEP；control 和 baseline 的 20 对完全一致。它说明的是：unit
+          里确实有任务需要的东西时，工具能测出来。它不说明的是：这五对来自同一个任务的五轮，而且这个效果是我们故意放进去的。所有真实运行的记录和各自说明不了什么，见
+          <a href={doc('docs/validation.md')}>docs/validation.md</a>（英文）。
+        </p>
+
+        <h2 id="verdict">结论是怎么得出的</h2>
+        <ul>
+          <li>每次试验都从仓库在任务基准 commit 上的一份干净副本开始，配置换成这一组的配置。副本里只有一个 commit，隐藏的测试和被换掉的配置都不在里面。</li>
+          <li>各组一轮一轮地轮流运行，没有哪一组总是先跑。</li>
+          <li>没能运行的试验，或者 agent 在时限之前被信号终止的试验，没有结论，不计入 pair，报告里会点名。</li>
+          <li>
+            同一个任务、同一轮、在两组下各跑一次，是一个 pair。变了结果的 pair 一边倒到不可能是偶然（精确符号检验，5%），并且比 control 的差异更多时，这个变体才算<strong
+              >更差</strong
+            >或<strong>更好</strong>。
+          </li>
+          <li>
+            通过率最多比 baseline 低 10 个百分点、置信度 95%（精确二项界）时，算<strong>不更差</strong>，这大约需要 30 个结果一致的 pair。<code>--margin POINTS</code> 可以改这个
+            10：20 个点时 14 对就够，5 个点时要 59 对。
+          </li>
+          <li>其余情况都是<strong>证据不够</strong>。用更大的 <code>--rounds</code> 再运行同一条命令，会接着这个实验做下去。</li>
+        </ul>
+        <p>对只去掉 unit 的变体，报告里写的是 KEEP（去掉后更差）、REMOVABLE（去掉后不更差）或 NOT ENOUGH EVIDENCE。</p>
+
+        <h2 id="limits">要知道的限制</h2>
+        <ul>
+          <li>真实运行只支持 Claude Code。<code>--agent-cmd</code> 可以把任意命令当作 agent 来跑，工具自己的测试就是这样做的。</li>
+          <li>结论只对测量时用的任务、agent 版本和模型成立，不能直接搬到别的上面。</li>
+          <li>结论要靠真实运行来换。在我们的运行里，把整份配置和「完全没有配置」比一次，每个仓库用了 88 到 90 个任务、$84 到 $93、三到八个小时；<code>prune</code> 要为每个 unit 各跑这样一组。</li>
+          <li>REMOVABLE 的意思是「在这些任务上测不出损失」，不是「在哪里都没用」：任务根本没碰到某个 unit 管的事情，就显不出它的价值。</li>
+          <li>花费上限是在每组每轮开始前检查的，所以一次运行最多会超出一组一轮的试验。</li>
+          <li><code>prune</code> 是逐个测 unit 的。两个说同一件事的 unit 都会显示 REMOVABLE；最后那次合并检查会发现这一点，这时不写补丁。</li>
+          <li>baseline 自己大多失败的任务会让一切看起来都可以去掉；baseline 通过不到一半时 <code>prune</code> 会给出警告。</li>
+          <li>token 数是估算的（大约四个字符一个 token）。</li>
+        </ul>
+
+        <h2 id="agent">让 agent 替你做前四步</h2>
+        <p>装上插件后，对你的 coding agent 说一句「Set up memprove-tune in this repository.」：</p>
+        <CodeTerm title="claude code" code={tunePluginCommand} copy="复制" />
+        <p>
+          它会安装 memprove-tune，运行 <code>scan</code>、<code>init --verify</code> 和 <code>prune --dry-run</code>，然后把结果报告给你。这几步都不启动
+          agent、不调用模型；除非你明确要求并给出花费上限，它不会开始真实运行。Codex、Cursor 和其他 agent 的装法见
+          <a href={doc('plugins/memprove-tune/README.md')}>插件的 README</a>（英文）。
+        </p>
+
+        <h2 id="next">下一步</h2>
+        <ul>
+          <li><a href={`${repo}#readme`}>README</a>（英文）：所有命令和它们的输出。</li>
+          <li><a href={doc('docs/tasks.md')}>docs/tasks.md</a>（英文）：任务文件的格式，怎样手写任务。</li>
+          <li><a href={doc('docs/validation.md')}>docs/validation.md</a>（英文）：每一次真实运行测出了什么，说明不了什么。</li>
+          <li>问题和 bug：<a href={`${repo}/issues`}>GitHub issues</a>。</li>
+        </ul>
+      </article>
+    </div>
+  </section>
+</Site>
+
+<style is:global>
+  /* A report with a table keeps its columns and scrolls sideways when the block is narrow. */
+  .keep-cols .tbody .ln.hang {
+    white-space: pre;
+    padding-left: 0;
+    text-indent: 0;
+  }
+</style>
+
+<script>
+  // Copy buttons: copy the block's commands, then say so for two seconds.
+  for (const b of document.querySelectorAll<HTMLButtonElement>('button[data-copy]')) {
+    const label = b.textContent;
+    b.addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(b.dataset.copy ?? '');
+      } catch {
+        return;
+      }
+      b.textContent = b.dataset.done ?? label;
+      setTimeout(() => (b.textContent = label), 2000);
+    });
+  }
+</script>

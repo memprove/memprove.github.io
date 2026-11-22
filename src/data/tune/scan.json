@@ -1,0 +1,85 @@
+{
+  "schema": "tune.scan.v1",
+  "files": [
+    {
+      "path": "CLAUDE.md",
+      "lines": 15,
+      "link_to": null,
+      "load": "always",
+      "when": null,
+      "why": null
+    }
+  ],
+  "units": [
+    {
+      "id": "CLAUDE.md#tests",
+      "kind": "section",
+      "file": "CLAUDE.md",
+      "title": "Tests",
+      "first_line": 1,
+      "last_line": 4,
+      "sha256": "8c548af81a218c6583a6e7c59379470bcb92e3a8cf62255e0cc7e343eb6ce932",
+      "tokens": 24,
+      "always_tokens": 24,
+      "load": "always",
+      "when": null,
+      "why": null,
+      "imports": []
+    },
+    {
+      "id": "CLAUDE.md#money",
+      "kind": "section",
+      "file": "CLAUDE.md",
+      "title": "Money",
+      "first_line": 5,
+      "last_line": 8,
+      "sha256": "812932fad2c4d4cf44b5e9459a8996252c2d62321345e22e74c8f3b27a08bfab",
+      "tokens": 40,
+      "always_tokens": 40,
+      "load": "always",
+      "when": null,
+      "why": null,
+      "imports": []
+    },
+    {
+      "id": "CLAUDE.md#limits",
+      "kind": "section",
+      "file": "CLAUDE.md",
+      "title": "Limits",
+      "first_line": 9,
+      "last_line": 12,
+      "sha256": "355c6a9d0139d3eb852b4135bbe66326a2edaa87179ccecc1179e249c9bad19d",
+      "tokens": 31,
+      "always_tokens": 31,
+      "load": "always",
+      "when": null,
+      "why": null,
+      "imports": []
+    },
+    {
+      "id": "CLAUDE.md#ports",
+      "kind": "section",
+      "file": "CLAUDE.md",
+      "title": "Ports",
+      "first_line": 13,
+      "last_line": 15,
+      "sha256": "e353636e4adee489257f9479bb7ecbb15d7333b6f10791af2f1bb222ec593a18",
+      "tokens": 34,
+      "always_tokens": 34,
+      "load": "always",
+      "when": null,
+      "why": null,
+      "imports": []
+    }
+  ],
+  "findings": [],
+  "verdicts": [],
+  "totals": {
+    "files": 1,
+    "units": 4,
+    "tokens": 129,
+    "always_tokens": 129,
+    "findings": 0
+  }
+}
+

@@ -1,0 +1,14 @@
+Experiment 2707b9652d84: 3 arms x 4 tasks x 5 rounds = 60 trials (60 done)
+Agent: claude-code, model claude-opus-5-5 (2.1.310 (Claude Code))
+
+  ARM                   PASSED    RATE  COST/TRIAL  TOKENS/TRIAL  CONFIG TOKENS
+  baseline               20/20  100.0%       $0.10         1,177            129
+  control                20/20  100.0%       $0.10         1,183            129
+  without CLAUDE.md      15/20   75.0%       $0.11         1,279              0
+
+without CLAUDE.md vs baseline: 20 pairs (both passed 15, neither 0, only the baseline 5, only this arm 0)
+  KEEP: the agent passes less often without it (p = 0.031).
+  cost per trial: +6.5%
+control vs baseline (the same configuration twice): 20 pairs, 0 differ. A difference has to be larger than that to count.
+
+Spent $6.36 of the $7.50 cap. Runs, logs and report.json: /private/tmp/mt-ab1/parcelpost/.git/tune/experiments/2707b9652d84
