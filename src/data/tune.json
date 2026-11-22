@@ -1,0 +1,10 @@
+{
+  "version": "0.1.0",
+  "tag": "v0.1.0",
+  "repo": "https://github.com/memprove/memprove-tune",
+  "base": "https://github.com/memprove/memprove-tune/releases/download/v0.1.0",
+  "targets": {
+    "macos": { "label": "macOS (Apple silicon)", "triple": "aarch64-apple-darwin" },
+    "linux": { "label": "Linux x86_64 (glibc 2.35+)", "triple": "x86_64-unknown-linux-gnu" }
+  }
+}

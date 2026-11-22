@@ -1,0 +1,12 @@
+1 configuration file, 4 units. About 129 tokens load in every Claude Code session; 129 in all.
+
+CLAUDE.md (15 lines, loaded in every session)
+  CLAUDE.md#tests   lines 1-4             24 tokens
+  CLAUDE.md#money   lines 5-8             40 tokens
+  CLAUDE.md#limits  lines 9-12            31 tokens
+  CLAUDE.md#ports   lines 13-15           34 tokens
+
+Findings: 0
+
+Token counts are estimates. Nothing was run and no model was called.
+To test whether a unit earns its place: memprove-tune ab --drop <UNIT>, or memprove-tune prune for all of them

@@ -1,0 +1,9 @@
+Prune: 4 units, each dropped alone, on 4 tasks x 8 rounds = 32 pairs a unit. A REMOVABLE verdict at a margin of 10 points needs 29 pairs that agree.
+  units, largest first: CLAUDE.md#money (40 tokens); CLAUDE.md#ports (34 tokens); CLAUDE.md#limits (31 tokens); CLAUDE.md#tests (24 tokens)
+  held out for the final check: mined-5bbafe7
+Experiment 61f1587f6add: 6 arms x 4 tasks x 8 rounds = 192 trials (0 done, 192 to run)
+  arms: baseline; control; without CLAUDE.md#money; without CLAUDE.md#ports; without CLAUDE.md#limits; without CLAUDE.md#tests
+  agent: claude-code
+  estimated cost of what is left: $21.12 at $0.11 a trial; cap $30.00
+Then the units that are not needed are dropped together and checked against the baseline on the held-out tasks: up to 16 more trials, about $1.76.
+Nothing was run (--dry-run).

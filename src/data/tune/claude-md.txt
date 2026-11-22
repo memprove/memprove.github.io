@@ -1,0 +1,15 @@
+## Tests
+
+Run the tests with `python3 -m unittest discover -s tests` from the repository root.
+
+## Money
+
+Money is integer cents everywhere. Customer-facing amounts are rounded half-up to whole cents with `pricing.round_half_up`, never with `round()`.
+
+## Limits
+
+API clients are rate limited to 100 requests per minute per API key. Orders of €50.00 or more ship free.
+
+## Ports
+
+Ops allocated port 7431 to parcelpost in the shared host's port registry; the code still defaults to 8000 until we switch.

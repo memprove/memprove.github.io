@@ -14,7 +14,7 @@ import { repo } from '../lib/site';
 interface Props {
   title: string;
   description: string;
-  current?: 'home' | 'about' | 'roadmap' | 'zh';
+  current?: 'home' | 'about' | 'roadmap' | 'zh' | 'tune';
   noindex?: boolean;
   /** The page's language; the Chinese quickstart sets zh-CN. */
   lang?: string;
@@ -66,6 +66,7 @@ const stars = repo.stars !== null && repo.stars >= 10 ? repo.stars : null;
         <a class="navl" href="/docs/">Docs</a>
         <a class="navl" href="/how-it-works/">How it works</a>
         <a class="navl opt" href="/changelog/">Changelog</a>
+        <a class="navl opt" href="/tune/" aria-current={current === 'tune' ? 'page' : undefined}>Tune</a>
         <a class="navl opt" href="https://github.com/memprove/memprove">GitHub{stars !== null && <span class="mono" style="font-size: 13px; margin-left: 6px">★ {stars}</span>}</a>
         <a class="btn small nav-cta" href="/docs/">Get started</a>
       </nav>
@@ -80,6 +81,7 @@ const stars = repo.stars !== null && repo.stars >= 10 ? repo.stars : null;
         <a class="navl" href="/changelog/">Changelog</a>
         <a class="navl" href="/about/" aria-current={current === 'about' ? 'page' : undefined}>About</a>
         <a class="navl" href="/roadmap/" aria-current={current === 'roadmap' ? 'page' : undefined}>Roadmap</a>
+        <a class="navl" href="/tune/" aria-current={current === 'tune' ? 'page' : undefined}>memprove-tune</a>
         <a class="navl" href="/llms.txt">llms.txt</a>
         <a class="navl" href="https://github.com/memprove/memprove">GitHub</a>
         <a class="navl" href="/zh/" lang="zh-CN" hreflang="zh-CN" aria-current={current === 'zh' ? 'page' : undefined}>中文</a>
