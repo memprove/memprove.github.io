@@ -1,0 +1,32 @@
+Experiment 17769feefe9e: 6 arms x 3 tasks x 10 rounds = 180 trials (180 done)
+Agent: claude-code, model claude-opus-5-5 (2.1.310 (Claude Code))
+
+  ARM                          PASSED    RATE  COST/TRIAL  TOKENS/TRIAL  CONFIG TOKENS
+  baseline                      30/30  100.0%       $0.11         1,157            129
+  control                       30/30  100.0%       $0.11         1,165            129
+  without CLAUDE.md#money       30/30  100.0%       $0.11         1,165             89
+  without CLAUDE.md#ports       20/30   66.7%       $0.11         1,168             95
+  without CLAUDE.md#limits      30/30  100.0%       $0.11         1,098             98
+  without CLAUDE.md#tests       30/30  100.0%       $0.12         1,314            105
+
+without CLAUDE.md#money vs baseline: 30 pairs (both passed 30, neither 0, only the baseline 0, only this arm 0)
+  REMOVABLE: the agent passes as often without it (at most 9.5 points lower, 95% bound); each session carries about 40 fewer configuration tokens.
+  cost per trial: +1.1%
+without CLAUDE.md#ports vs baseline: 30 pairs (both passed 20, neither 0, only the baseline 10, only this arm 0)
+  KEEP: the agent passes less often without it (p < 0.001).
+  cost per trial: +2.3%
+without CLAUDE.md#limits vs baseline: 30 pairs (both passed 30, neither 0, only the baseline 0, only this arm 0)
+  REMOVABLE: the agent passes as often without it (at most 9.5 points lower, 95% bound); each session carries about 31 fewer configuration tokens.
+  cost per trial: -2.5%
+without CLAUDE.md#tests vs baseline: 30 pairs (both passed 30, neither 0, only the baseline 0, only this arm 0)
+  REMOVABLE: the agent passes as often without it (at most 9.5 points lower, 95% bound); each session carries about 24 fewer configuration tokens.
+  cost per trial: +7.4%
+control vs baseline (the same configuration twice): 30 pairs, 0 differ. A difference has to be larger than that to count.
+
+Spent $19.84 of the $30.00 cap. Runs, logs and report.json: /private/tmp/mt-prune1/parcelpost/.git/tune/experiments/17769feefe9e
+
+Pruned configuration: without CLAUDE.md#limits, CLAUDE.md#money and CLAUDE.md#tests (3 of 4 units; about 95 fewer tokens in every session).
+Checked on 1 held-out task x 10 rounds: the pruned configuration passed 10 of 10, the baseline 10 of 10 (experiment 9e12cfd88bbc).
+Patch: .tune/prune.patch (apply it with `git apply .tune/prune.patch`)
+Verdicts: .tune/verdicts.json (4 units)
+Spent $21.99 of the $30.00 cap in all.
