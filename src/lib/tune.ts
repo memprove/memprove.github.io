@@ -3,6 +3,7 @@
 // show in a terminal block or a figure is read from those files at build time.
 import tuneJson from '../data/tune.json';
 import scanJson from '../data/tune/scan.json';
+import verdictsJson from '../data/tune/verdicts.json';
 
 export const tune = tuneJson;
 
@@ -27,15 +28,25 @@ export function tuneLine(name: string, test: RegExp): string {
   return found;
 }
 
-export type Unit = { id: string; title: string; first: number; last: number; tokens: number };
+export type Advice = 'keep' | 'removable' | 'inconclusive';
+export type Unit = { id: string; title: string; first: number; last: number; tokens: number; advice: Advice };
 
-/** The units of `memprove-tune scan --json`, in file order. */
+/** The verdict `prune` recorded for a unit; the unit's text must be the one that was tested. */
+function adviceFor(id: string, sha256: string): Advice {
+  const v = verdictsJson.verdicts.find((x) => x.unit === id);
+  if (!v) throw new Error(`src/data/tune/verdicts.json has no verdict for ${id}`);
+  if (v.sha256 !== sha256) throw new Error(`the verdict for ${id} was measured on another text of the unit`);
+  return v.advice as Advice;
+}
+
+/** The units of `memprove-tune scan --json`, in file order, with the verdict of the real prune run. */
 export const units: Unit[] = scanJson.units.map((u) => ({
   id: u.id,
   title: u.title,
   first: u.first_line,
   last: u.last_line,
   tokens: u.tokens,
+  advice: adviceFor(u.id, u.sha256),
 }));
 export const unitTokens = units.reduce((sum, u) => sum + u.tokens, 0);
 

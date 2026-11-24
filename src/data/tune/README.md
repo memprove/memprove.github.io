@@ -13,3 +13,8 @@ printed by the tool. Nothing here is written by hand.
 - `ab.txt`: the report of run 1 (experiment `2707b9652d84`, 2026-11-17 and
   11-18, Claude Code 2.1.310 with `claude-opus-5-5`), as the tool printed it
   after the last round.
+- `prune.txt`, `verdicts.json`: the report and the verdict file of run 4
+  (`prune`, experiments `17769feefe9e` and `9e12cfd88bbc`, 2026-11-24,
+  Claude Code 2.1.310 with `claude-opus-5-5`), copied unchanged from the
+  run's log and its `.tune/verdicts.json`. The build stops if a unit's
+  text in `scan.json` is not the text the verdict was measured on.

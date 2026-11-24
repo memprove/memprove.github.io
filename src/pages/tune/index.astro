@@ -31,12 +31,17 @@ const fig1 = file.map((text, i) => {
   return { n: String(n).padStart(2, '0'), text, unit };
 });
 
-// ---- fig. 3: the recorded report of run 1
-const ab = tuneTranscript('ab');
-const [baseline, control, without] = arms();
-const trials = baseline.of + control.of + without.of;
-const spent = tuneLine('ab', /^Spent /).match(/^Spent (\$[\d.]+)/)?.[1] ?? '';
-const abCommand = 'memprove-tune ab --drop CLAUDE.md --rounds 5 --max-cost 7.50';
+// ---- fig. 4: the recorded report of the real prune run; run 1 in one sentence
+const pruneReport = tuneTranscript('prune');
+const pruneCommand = 'memprove-tune prune --agent claude-code --max-cost 30';
+const pruneSpent = tuneLine('prune', /^Spent .* in all\.$/).match(/^Spent (\$[\d.]+)/)?.[1] ?? '';
+const searchDone = Number(tuneLine('prune', /^Experiment /).match(/\((\d+) done\)/)?.[1]);
+const checked = tuneLine('prune', /^Checked on /).match(/passed \d+ of (\d+), the baseline \d+ of (\d+)/);
+const pruneTrials = searchDone + Number(checked?.[1]) + Number(checked?.[2]);
+if (!Number.isFinite(pruneTrials)) throw new Error('src/data/tune/prune.txt: cannot read the number of trials');
+const mark = { keep: '■', removable: '□', inconclusive: '▨' } as const;
+const markClass = { keep: 'v-keep', removable: 'v-rem', inconclusive: 'v-nee' } as const;
+const [baseline, , without] = arms();
 
 // ---- the plan
 const plan = tuneTranscript('plan');
@@ -117,12 +122,19 @@ const ld = {
                 <>
                   <span class="num">{r.n}</span>
                   <span class={`l ${r.unit ? 'uhead' : ''}`}>{r.text || ' '}</span>
-                  <span class="note">{r.unit ? `${r.unit.id.replace('CLAUDE.md', '')} · ${r.unit.tokens} tokens` : ''}</span>
+                  <span class="note">
+                    {r.unit && (
+                      <>
+                        <span title={`${r.unit.tokens} tokens`}>{`${r.unit.id.replace('CLAUDE.md', '')} · `}</span>
+                        <span class={markClass[r.unit.advice]}>{mark[r.unit.advice]} {r.unit.advice}</span>
+                      </>
+                    )}
+                  </span>
                 </>
               ))
             }
           </div>
-          <div class="pfoot">Which of these four does the agent need? Reading them will not tell you. Running the agent with and without each one will.</div>
+          <div class="pfoot">Which of these four does the agent need? Reading them will not tell you. Running the agent with and without each one did: the marks are what <span class="mono">prune</span> found (fig. 4).</div>
         </figure>
         <p class="cap" style="font-size: 12px">
           The <span class="mono">CLAUDE.md</span> of parcelpost, a small repository made up for the first run with a real agent.
@@ -235,23 +247,24 @@ const ld = {
         </div>
         <div class="stack">
           <p class="txt">
-            The notes of fig. 1 hold one thing a task needs and the code does not say: the port number in line 15. In the
-            first run with a real agent they were still one list, and the whole file was dropped. With Claude Code,
-            {trials} trials and {spent}: the baseline passed {baseline.passed} of {baseline.of}, the control {control.passed} of
-            {control.of}, and the arm without the file {without.passed} of {without.of}. The control differed from the baseline
-            in no pair.
+            The notes of fig. 1 hold one thing a task needs and the code does not say: the port number in line 15.
+            <span class="code">prune</span> dropped each section alone, ten rounds on three tasks. Without Ports the agent failed
+            the port task every time; without each of the other three, all 30 pairs passed on both sides. It then dropped
+            those three together, checked them on a fourth task it had kept aside, and wrote a patch that leaves only Ports.
+            Claude Code, {pruneTrials} trials, {pruneSpent}. An earlier run that dropped the whole file found the same: the agent
+            passed {baseline.passed} of {baseline.of} with it and {without.passed} of {without.of} without it.
           </p>
           <ul class="list muted">
-            <li>— what it shows: when a unit holds something a task needs, the tool finds it</li>
-            <li>— what it does not: the five pairs are one task in five rounds, and the effect was put there on purpose</li>
+            <li>— what it shows: unit by unit, the tool keeps the one that matters and lets the others go</li>
+            <li>— what it does not: the repository is made up and the effect was put there on purpose</li>
           </ul>
         </div>
       </div>
       <div class="stack keep-cols" style="gap: 10px">
-        <CodeTerm title="memprove-tune ab — parcelpost" code={`${abCommand}\n${ab}`} output label="fig. 4: the report of the first run with a real agent" />
+        <CodeTerm title="memprove-tune prune — parcelpost" code={`${pruneCommand}\n${pruneReport}`} output label="fig. 4: the report of the first prune run with a real agent" />
         <p class="cap" style="font-size: 12px">
-          [ fig. 4 ] The report as the tool printed it on 2026-11-18; the command is shown without its options for the task
-          files, the model and the number of trials at a time.
+          [ fig. 4 ] The report as the tool printed it on 2026-11-24; the command is shown without its options for the task
+          files, the model, the number of trials at a time and each trial's budget.
           <a href={doc('docs/validation.md')}>Every run with a real agent, and what it does not show →</a>
         </p>
       </div>

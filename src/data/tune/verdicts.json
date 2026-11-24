@@ -1,0 +1,81 @@
+{
+  "schema": "tune.verdicts.v1",
+  "verdicts": [
+    {
+      "unit": "CLAUDE.md#limits",
+      "sha256": "355c6a9d0139d3eb852b4135bbe66326a2edaa87179ccecc1179e249c9bad19d",
+      "advice": "removable",
+      "pairs": 30,
+      "both_pass": 30,
+      "both_fail": 0,
+      "only_baseline": 0,
+      "only_variant": 0,
+      "margin": 0.1000,
+      "config": "f940b60ff0585a97f7bd6841a56874586c24328e6a93d1e501056864e1e4bdf0",
+      "tasks": "894457cf6514cda9e0a61e3be73b3c0c80781c9e65c2926b75b20d3a8427fd74",
+      "task_paths": [
+        "evals/claude-md"
+      ],
+      "agent": "claude-code, model claude-opus-5-5",
+      "agent_version": "2.1.310 (Claude Code)",
+      "experiment": "17769feefe9e"
+    },
+    {
+      "unit": "CLAUDE.md#money",
+      "sha256": "812932fad2c4d4cf44b5e9459a8996252c2d62321345e22e74c8f3b27a08bfab",
+      "advice": "removable",
+      "pairs": 30,
+      "both_pass": 30,
+      "both_fail": 0,
+      "only_baseline": 0,
+      "only_variant": 0,
+      "margin": 0.1000,
+      "config": "f940b60ff0585a97f7bd6841a56874586c24328e6a93d1e501056864e1e4bdf0",
+      "tasks": "894457cf6514cda9e0a61e3be73b3c0c80781c9e65c2926b75b20d3a8427fd74",
+      "task_paths": [
+        "evals/claude-md"
+      ],
+      "agent": "claude-code, model claude-opus-5-5",
+      "agent_version": "2.1.310 (Claude Code)",
+      "experiment": "17769feefe9e"
+    },
+    {
+      "unit": "CLAUDE.md#ports",
+      "sha256": "e353636e4adee489257f9479bb7ecbb15d7333b6f10791af2f1bb222ec593a18",
+      "advice": "keep",
+      "pairs": 30,
+      "both_pass": 20,
+      "both_fail": 0,
+      "only_baseline": 10,
+      "only_variant": 0,
+      "margin": 0.1000,
+      "config": "f940b60ff0585a97f7bd6841a56874586c24328e6a93d1e501056864e1e4bdf0",
+      "tasks": "894457cf6514cda9e0a61e3be73b3c0c80781c9e65c2926b75b20d3a8427fd74",
+      "task_paths": [
+        "evals/claude-md"
+      ],
+      "agent": "claude-code, model claude-opus-5-5",
+      "agent_version": "2.1.310 (Claude Code)",
+      "experiment": "17769feefe9e"
+    },
+    {
+      "unit": "CLAUDE.md#tests",
+      "sha256": "8c548af81a218c6583a6e7c59379470bcb92e3a8cf62255e0cc7e343eb6ce932",
+      "advice": "removable",
+      "pairs": 30,
+      "both_pass": 30,
+      "both_fail": 0,
+      "only_baseline": 0,
+      "only_variant": 0,
+      "margin": 0.1000,
+      "config": "f940b60ff0585a97f7bd6841a56874586c24328e6a93d1e501056864e1e4bdf0",
+      "tasks": "894457cf6514cda9e0a61e3be73b3c0c80781c9e65c2926b75b20d3a8427fd74",
+      "task_paths": [
+        "evals/claude-md"
+      ],
+      "agent": "claude-code, model claude-opus-5-5",
+      "agent_version": "2.1.310 (Claude Code)",
+      "experiment": "17769feefe9e"
+    }
+  ]
+}
