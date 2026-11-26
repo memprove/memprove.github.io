@@ -18,6 +18,7 @@ const required = [
   '404.html',
   'about/index.html',
   'roadmap/index.html',
+  'benchmark/index.html',
   'zh/index.html',
   'tune/index.html',
   'zh/tune/index.html',

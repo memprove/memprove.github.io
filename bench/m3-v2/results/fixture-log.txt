@@ -1,0 +1,9 @@
+b62acd7df14ebb348fa8171d1beea49dd37cdc04 2026-10-28T09:20:00Z money: refunds round down to whole cents (finance rule FIN-112)
+91aadd1937ab905380efc8c303d9b5c25130f8ed 2026-10-20T13:00:00Z bench: the same tree without CLAUDE.md
+91627fe26daf7cca0a2d4b3eab2de854017bd195 2026-10-20T13:00:00Z docs: describe the quote endpoint's errors
+ead2640e657de7aad697d37ac8393e5521a96b8c 2026-10-15T11:45:00Z pricing: free shipping from 7500 cents
+3a95e07ae026e01ad3078498eb3d0332244873bd 2026-10-02T08:15:00Z rate limit: 60 requests per minute per key after the 2026-09-30 incident
+0a3714781049dec0abc2e1c5b201ecb0cdcef39d 2026-09-18T16:00:00Z pricing: zone D for the islands
+b85f10e0ea86cea60c56cac1a9d75bd54cf20142 2026-09-10T10:30:00Z cli: --json prints the quote as JSON
+8c882074240691bd06bc714572fa99deb1bafaa8 2026-09-03T14:00:00Z add per-key rate limiting and the free-shipping threshold
+82b7a950f7e9b866dd7365de4c381fa06d8e4262 2026-09-01T09:00:00Z initial: quotes by weight and zone

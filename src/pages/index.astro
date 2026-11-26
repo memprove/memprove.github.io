@@ -208,8 +208,12 @@ const ld = {
         <h2 class="h2">Notes don't know when they stop being true.</h2>
         <p class="txt">
           A line in <span class="code">CLAUDE.md</span> says the parser handles empty input. Three commits later it doesn't, and
-          your agent still believes it. Memory files, auto-memory and hosted memory layers merge and expire text by timestamps
+          the line still says it does. Memory files, auto-memory and hosted memory layers merge and expire text by timestamps
           and wording. None of them checks whether the code still passes.
+        </p>
+        <p class="txt sm">
+          Agents often catch such a line by reading the code: on our benchmark's tasks they did, with a plain
+          <span class="code">CLAUDE.md</span> as well as with memprove. <a href="/benchmark/">The results →</a>
         </p>
       </div>
       <figure class="panel" style="margin: 0">
@@ -496,6 +500,7 @@ const ld = {
             <span class="num mono" style="font-size: 13px">03</span><span>Case counts are read from cargo and pytest output; other runners pass <span class="code">--test-cases</span>.</span>
             <span class="num mono" style="font-size: 13px">04</span><span>Ignored files and environment variables are not part of the repository state.</span>
             <span class="num mono" style="font-size: 13px">05</span><span>No tests, no verified: memprove is for repositories that have them.</span>
+            <span class="num mono" style="font-size: 13px">06</span><span>On <a href="/benchmark/">our benchmark</a>, memprove's memory did no better than the same notes in <span class="code">CLAUDE.md</span>, and cost a little more.</span>
           </div>
         </div>
       </div>
