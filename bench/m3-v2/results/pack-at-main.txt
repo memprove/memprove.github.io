@@ -1,0 +1,19 @@
+Pack: memprove-pack v1; capsule_digest sha256:df8d4d4f5a065d187b348b9076d3cafa642349014a9b9c5ac64610341ab9ad55; ledger sequence 10; probed HEAD b62acd7df14ebb348fa8171d1beea49dd37cdc04; budget 9000 UTF-16 code units
+Ontology: continuity.work-state-ontology.v4 (the version of the verdict rules)
+Task「parcelpost: rate limiting and free shipping」 (in_progress): stale (reasons: head_changed, index_changed, evidence_stale); active claims 6: facts 3 (stale 3), open items 0, decisions 2, next actions 1; superseded 0; withdrawn 0 (facts 0)
+Integrity: no inconsistency found (the event chain is valid, and every record of this Task recomputes and agrees with the ledger)
+Sessions: 1 in all, 1 ended normally, 0 ended abandoned, 0 not ended, 0 declared a resumed_from Pack
+Session 1 01a2166b-c97d-7493-98b6-e3e4a049a5c8 ended normally (started 2026-11-26T05:54:52.413383Z); agent「notes-agent」(orchestrator)
+Cannot: complete the Task (transitionTask; reasons: evidence_stale; needs mcp-write)
+Can: begin a new Session (createSession; needs mcp-write)
+Can: record a fact citing the latest run (createCheckpoint; needs mcp-write)
+Base: 8c882074240691bd06bc714572fa99deb1bafaa8; files changed since: 「docs/API.md」, 「docs/FAQ.md」, 「parcelpost/cli.py」, 「parcelpost/config.py」, 「parcelpost/money.py」, 「parcelpost/pricing.py」, 「tests/test_cli.py」, 「tests/test_free_shipping.py」, 「tests/test_money.py」, 「tests/test_ratelimit.py」, 「tests/test_zones.py」
+#1 fact stale: 「Money is integer cents everywhere. Customer-facing amounts are rounded half-up to whole cents with pricing.round_half_up, never with round().」 (reasons: head_changed, index_changed, evidence_stale; evidence bound to commit 8c8820742406; from Session 1「notes-agent」)
+#2 fact stale: 「API clients are rate limited to 100 requests per minute per API key.」 (reasons: head_changed, index_changed, evidence_stale; evidence bound to commit 8c8820742406; from Session 1「notes-agent」)
+#3 fact stale: 「Orders of €50.00 or more ship free.」 (reasons: head_changed, index_changed, evidence_stale; evidence bound to commit 8c8820742406; from Session 1「notes-agent」)
+Rerun: 「python3 -m unittest discover -s tests」 on the current HEAD (for #1, #2, #3)
+#5 decision: 「Ops allocated port 7431 to parcelpost in the shared host's port registry; the code still defaults to 8000 until we switch.」, rationale 「the entry in the shared host's port registry」 (no evidence cited; from Session 1「notes-agent」)
+#6 decision: 「Ops moved staging to https://staging-2.parcelpost.invalid on 2026-09-02; staging-1 is retired. docs/DEPLOY.md still names staging-1 until someone updates it.」, rationale 「ops announcement of 2026-09-02」 (no evidence cited; from Session 1「notes-agent」)
+#4 next action: 「No work is planned; take the next request.」 (no evidence cited; from Session 1「notes-agent」)
+Omitted: level 0; bases with files only counted 0, bodies shortened 0, bodies omitted 0, folded into one line 0, not listed 0; full text of given numbers: memprove resume --pack --claims <numbers> (such as 3,5-7)
+Digest: sha256:120e800672f9e15d410f379fe99b9af9f6f485d19af88003740ee9ac2dfebde2

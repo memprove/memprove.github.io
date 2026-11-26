@@ -32,6 +32,7 @@ import { release } from '../lib/site';
           <li>Test case counts are read from cargo and pytest output. Other runners pass <code>--test --test-cases &lt;N&gt;</code>.</li>
           <li>The repository state covers tracked files, the index, HEAD and the branch. Ignored files and environment variables are not part of it.</li>
           <li>The macOS binaries are not notarized.</li>
+          <li>On <a href="/benchmark/">the memory benchmark</a> (2026-11-26), memprove's memory did no better than the same notes in a plain <code>CLAUDE.md</code>, and a session with it cost about 10 % more. Tasks where the code cannot settle a note are not measured yet.</li>
           <li>The hooks are tested against each client's documented hook input. In a real client, only the policy hook in Codex has been run; the session-start hooks in Codex and Cursor, Cursor's policy hook and everything for TRAE have not.</li>
         </ul>
 

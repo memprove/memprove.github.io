@@ -14,7 +14,7 @@ import { repo } from '../lib/site';
 interface Props {
   title: string;
   description: string;
-  current?: 'home' | 'about' | 'roadmap' | 'zh' | 'tune';
+  current?: 'home' | 'about' | 'roadmap' | 'zh' | 'tune' | 'benchmark';
   noindex?: boolean;
   /** The page's language; the Chinese quickstart sets zh-CN. */
   lang?: string;
@@ -81,6 +81,7 @@ const stars = repo.stars !== null && repo.stars >= 10 ? repo.stars : null;
         <a class="navl" href="/changelog/">Changelog</a>
         <a class="navl" href="/about/" aria-current={current === 'about' ? 'page' : undefined}>About</a>
         <a class="navl" href="/roadmap/" aria-current={current === 'roadmap' ? 'page' : undefined}>Roadmap</a>
+        <a class="navl" href="/benchmark/" aria-current={current === 'benchmark' ? 'page' : undefined}>Benchmark</a>
         <a class="navl" href="/tune/" aria-current={current === 'tune' ? 'page' : undefined}>memprove-tune</a>
         <a class="navl" href="/llms.txt">llms.txt</a>
         <a class="navl" href="https://github.com/memprove/memprove">GitHub</a>

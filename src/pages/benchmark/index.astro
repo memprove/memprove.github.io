@@ -1,0 +1,478 @@
+---
+// The memory benchmark M3 v2 (2026-11-26): memprove's memory against the same notes in CLAUDE.md and
+// against none. The results and figures are read at build time from bench/m3-v2/ (src/lib/bench.ts).
+import Site from '../../layouts/Site.astro';
+import CodeTerm from '../../components/CodeTerm.astro';
+import {
+  models,
+  trials,
+  spent,
+  claudeCode,
+  memproveVersion,
+  memproveCommit,
+  platform,
+  trialCap,
+  runCap,
+  tasks,
+  claudeMdLines,
+  packClaims,
+  packRerun,
+  commits,
+  kitUrl,
+  resultsUrl,
+  resultsMdUrl,
+  packUrl,
+  type Cell,
+} from '../../lib/bench';
+
+const byModel = (id: string) => {
+  const m = models.find((x) => x.model === id);
+  if (!m) throw new Error(`results.md has no section for ${id}`);
+  return m;
+};
+const opus = byModel('claude-opus-5-5');
+const haiku = byModel('claude-haiku-5-5');
+const arm = (m: (typeof models)[number], name: string) => m.arms.indexOf(name);
+const kind = (m: (typeof models)[number], k: string, a: string) => m.kinds.find((x) => x.kind === k)!.cells[arm(m, a)];
+const cmp = (m: (typeof models)[number], a: string, b: string) => m.comparisons.find((c) => c.a === a && c.b === b)!;
+const frac = (c: Cell) => `${c.passed} of ${c.of}`;
+const pct = (a: string, b: string) => Math.round((Number(a) / Number(b) - 1) * 100);
+
+// Sentences below quote these numbers; the build fails if results.md says something else.
+const mainOpus = cmp(opus, 'memprove', 'claude-md');
+const mainHaiku = cmp(haiku, 'memprove', 'claude-md');
+const memOpus = cmp(opus, 'claude-md', 'none');
+const outdatedMisled = models.reduce((n, m) => n + (kind(m, 'memory-outdated', 'claude-md').of - kind(m, 'memory-outdated', 'claude-md').passed), 0);
+const outdatedClaudeMd = models.reduce((n, m) => n + kind(m, 'memory-outdated', 'claude-md').of, 0);
+const opusCost = { md: opus.cost[arm(opus, 'claude-md')], mp: opus.cost[arm(opus, 'memprove')] };
+const haikuCost = { md: haiku.cost[arm(haiku, 'claude-md')], mp: haiku.cost[arm(haiku, 'memprove')] };
+if (mainOpus.verdict !== 'no difference shown' || mainHaiku.verdict !== 'no difference shown')
+  throw new Error('the page says memprove and CLAUDE.md showed no difference; results.md disagrees');
+for (const m of models)
+  for (const a of ['claude-md', 'memprove'])
+    if (cmp(m, a, 'none').verdict !== `${a} better`) throw new Error(`the page says ${a} beat none for ${m.model}; results.md disagrees`);
+
+const code = (s: string) =>
+  s
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/`([^`]+)`/g, '<span class="code">$1</span>');
+
+const kindLabel: Record<string, string> = {
+  'needs-memory': 'needs the notes',
+  'memory-outdated': 'notes out of date',
+  control: 'control',
+};
+const armLabel: Record<string, string> = { none: 'none', 'claude-md': 'CLAUDE.md', memprove: 'memprove' };
+
+const runCommands = [
+  `./run_bench.sh setup      # memprove ${memproveVersion}, the repository, the tasks`,
+  './run_bench.sh rehearse   # scripted agents, no model: must print "rehearsal PASS"',
+  './run_bench.sh probe      # two cheap sessions: no user-level CLAUDE.md may show up',
+  './run_bench.sh start 5    # five rounds, detached',
+  './run_bench.sh wait       # repeat until it prints "ended with exit"',
+  './run_bench.sh collect    # results.md, results.json and the raw runs',
+].join('\n');
+
+const c2 = commits.find((c) => c.subject.startsWith('add per-key rate limiting'));
+const main = commits[commits.length - 1];
+---
+
+<Site
+  title="Benchmark · memprove"
+  description={`${trials} Claude Code sessions on one small repository: memprove's memory against the same notes in a plain CLAUDE.md, and against no notes. The kit, the rules fixed before the run, and every result.`}
+  current="benchmark"
+>
+  <!-- hero -->
+  <section class="page">
+    <div class="wrap two top">
+      <div class="stack" style="gap: 22px">
+        <p class="cap">[ benchmark · m3 v2 · run 2026-11-26 · memprove {memproveVersion} ]</p>
+        <h1 class="h2">Against a plain CLAUDE.md, memprove made no difference on these tasks.</h1>
+        <p class="lead">
+          We ran Claude Code {trials} times on a small repository whose notes had gone out of date. With memprove's memory, the
+          agent passed the same tasks as with the same notes in <span class="code">CLAUDE.md</span>. With either, it passed every
+          task that needed the notes; with none, it passed none of them. memprove cost a little more.
+        </p>
+        <p class="txt sm" style="color: var(--mp-muted)">
+          The rules for reading the results were written down before the run, and the script that collects the results applies
+          them. We said we would publish what came out, whatever it said. This is it.
+        </p>
+      </div>
+      <figure class="panel" style="margin: 0" aria-labelledby="sum-cap">
+        <div class="phead"><span id="sum-cap">[ fig. 1 — the result ]</span><span>{trials} sessions · {spent}</span></div>
+        <div class="lines sum">
+          <span class="num">01</span>
+          <span><b>memprove vs CLAUDE.md</b>, notes out of date: <span class="k-un">no difference shown</span>. {opus.model}: {mainOpus.aOnly} to {mainOpus.bOnly} of {mainOpus.pairs} pairs. {haiku.model}: {mainHaiku.aOnly} to {mainHaiku.bOnly}, p {mainHaiku.p}.</span>
+          <span class="num">02</span>
+          <span><b>Either memory vs none</b>, notes no file holds: <span class="k-ok">memory better</span>, {memOpus.aOnly} to {memOpus.bOnly} for each model and each kind of memory, p {memOpus.p}.</span>
+          <span class="num">03</span>
+          <span><b>Controls</b>: every arm passed {frac(kind(opus, 'control', 'none'))} with each model.</span>
+          <span class="num">04</span>
+          <span><b>Cost a session</b>, memprove vs CLAUDE.md: ${opusCost.mp} vs ${opusCost.md} ({opus.model}, {pct(opusCost.mp, opusCost.md)} % more); ${haikuCost.mp} vs ${haikuCost.md} ({haiku.model}).</span>
+        </div>
+        <div class="pfoot">From <a href={resultsMdUrl}>results.md</a>, as the kit's collect step wrote it. Costs are Claude Code's own count, at API prices.</div>
+      </figure>
+    </div>
+  </section>
+
+  <!-- 01 · setup -->
+  <section class="sec" id="setup">
+    <div class="wrap" style="display: flex; flex-direction: column; gap: 32px">
+      <div class="stack" style="max-width: 46em">
+        <p class="cap">[ 01 · the setup ]</p>
+        <h2 class="h2">Six notes, written down at an old commit.</h2>
+        <p class="txt">
+          parcelpost is a small Python service made up for the benchmark: shipping quotes by weight and zone, with tests. At
+          commit c2 (<span class="mono">{c2?.id}</span>, {c2?.date}) an agent wrote down six notes in <span class="code">CLAUDE.md</span>,
+          and the same six in memprove: three facts bound to a passing test run, two decisions no test can check, and the test
+          command. Then the code moved on. The rate limit went from 100 to 60 requests a minute, free shipping from €50 to €75,
+          and refunds started to round down. Every session starts at main (<span class="mono">{main.id}</span>, {main.date}).
+        </p>
+      </div>
+      <div class="two top">
+        <figure class="panel" style="margin: 0" aria-labelledby="fig2-cap">
+          <div class="phead"><span id="fig2-cap">[ fig. 2 — CLAUDE.md, as written at c2 ]</span><span>the claude-md arm</span></div>
+          <div class="lines file">
+            {claudeMdLines.map((l, i) => (<><span class="num">{String(i + 1).padStart(2, '0')}</span><span set:html={code(l) || ' '} /></>))}
+          </div>
+        </figure>
+        <figure class="panel" style="margin: 0" aria-labelledby="fig3-cap">
+          <div class="phead"><span id="fig3-cap">[ fig. 3 — memprove's Pack at main, its claims ]</span><span>the memprove arm</span></div>
+          <div class="lines file">
+            {
+              packClaims.map((c) => (
+                <>
+                  <span class="num">#{c.n}</span>
+                  <span>
+                    <span class={c.kind === 'fact stale' ? 'k-st' : 'k-un'}>{c.kind === 'fact stale' ? '▨ stale' : c.kind}</span> {c.text}
+                  </span>
+                </>
+              ))
+            }
+          </div>
+          <div class="pfoot"><span set:html={code(packRerun)} /> <a href={packUrl}>The whole Pack →</a></div>
+        </figure>
+      </div>
+      <div class="panel scroll-x">
+        <table class="bt">
+          <thead>
+            <tr><th scope="col">arm</th><th scope="col">what the agent starts with</th></tr>
+          </thead>
+          <tbody>
+            <tr><td class="mono">none</td><td>main without <span class="code">CLAUDE.md</span>, no memory</td></tr>
+            <tr><td class="mono">claude-md</td><td>main with <span class="code">CLAUDE.md</span> as written at c2 (fig. 2)</td></tr>
+            <tr><td class="mono">memprove</td><td>main without <span class="code">CLAUDE.md</span>; memprove's Context Pack (fig. 3) before the prompt</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- 02 · tasks -->
+  <section class="sec" id="tasks">
+    <div class="wrap" style="display: flex; flex-direction: column; gap: 28px">
+      <div class="stack" style="max-width: 46em">
+        <p class="cap">[ 02 · the tasks ]</p>
+        <h2 class="h2">Eight tasks, judged by hidden tests.</h2>
+        <p class="txt">
+          Two tasks need a note no file in the repository holds. Four touch a note that is out of date. Two are controls. The
+          prompt never mentions the note; a test the agent does not see decides whether the work is right.
+        </p>
+      </div>
+      <div class="panel scroll-x">
+        <table class="bt wide">
+          <thead>
+            <tr><th scope="col">task</th><th scope="col">kind</th><th scope="col">the notes say (c2)</th><th scope="col">the code says (main)</th></tr>
+          </thead>
+          <tbody>
+            {
+              tasks.map((t) => (
+                <tr>
+                  <td class="mono">{t.task}</td>
+                  <td class="mono kind">{kindLabel[t.kind] ?? t.kind}</td>
+                  <td set:html={code(t.notes)} />
+                  <td set:html={code(t.code)} />
+                </tr>
+              ))
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- 03 · results -->
+  <section class="sec" id="results">
+    <div class="wrap" style="display: flex; flex-direction: column; gap: 28px">
+      <div class="stack" style="max-width: 46em">
+        <p class="cap">[ 03 · the results ]</p>
+        <h2 class="h2">Passed, out of five rounds.</h2>
+        <p class="txt">
+          Five rounds, two models, three arms, eight tasks: {trials} sessions, {spent} in all. Claude Code stopped any session at
+          {trialCap}, and the kit would not start a round that could pass {runCap}.
+        </p>
+      </div>
+      <div class="two top">
+        {
+          models.map((m) => (
+            <figure class="panel" style="margin: 0">
+              <div class="phead"><span>[ {m.model} ]</span><span>passed / sessions</span></div>
+              <div class="scroll-x">
+                <table class="bt res">
+                  <thead>
+                    <tr><th scope="col">task</th>{m.arms.map((a) => <th scope="col">{armLabel[a] ?? a}</th>)}</tr>
+                  </thead>
+                  <tbody>
+                    {m.tasks.map((t) => (
+                      <tr>
+                        <td class="mono">{t.task}</td>
+                        {t.cells.map((c) => (
+                          <td class={`mono ${c.passed === c.of ? '' : c.passed === 0 ? 'k-bad' : 'k-st'}`}>{c.passed}/{c.of}</td>
+                        ))}
+                      </tr>
+                    ))}
+                    {m.kinds.map((k) => (
+                      <tr class="tot">
+                        <td>all: {kindLabel[k.kind] ?? k.kind}</td>
+                        {k.cells.map((c) => <td class="mono">{c.passed}/{c.of}</td>)}
+                      </tr>
+                    ))}
+                    <tr class="tot">
+                      <td>cost a session (USD)</td>
+                      {m.cost.map((c) => <td class="mono">{c}</td>)}
+                    </tr>
+                    <tr class="tot">
+                      <td>turns a session</td>
+                      {m.turns.map((c) => <td class="mono">{c}</td>)}
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </figure>
+          ))
+        }
+      </div>
+      <p class="cap" style="font-size: 12px">
+        Claude Code {claudeCode}, memprove {memproveVersion} ({memproveCommit}), {platform}, two sessions at a time. Means are rounded as results.md
+        rounds them.
+      </p>
+    </div>
+  </section>
+
+  <!-- 04 · reading -->
+  <section class="sec" id="reading">
+    <div class="wrap" style="display: flex; flex-direction: column; gap: 28px">
+      <div class="stack" style="max-width: 46em">
+        <p class="cap">[ 04 · the reading ]</p>
+        <h2 class="h2">The rules were fixed before the run.</h2>
+        <p class="txt">
+          Each (round, task) is a pair of sessions, one in each arm. Only pairs where exactly one arm passed count. A one-sided
+          exact sign test on those decides: "better" if p &lt; 0.05, otherwise "no difference shown". The main question is memprove
+          against <span class="code">CLAUDE.md</span> on the four out-of-date tasks; memprove would have needed, for example, five
+          wins and no loss.
+        </p>
+      </div>
+      <div class="panel scroll-x">
+        <table class="bt wide">
+          <thead>
+            <tr><th scope="col">model</th><th scope="col">comparison</th><th scope="col">tasks</th><th scope="col">pairs</th><th scope="col">only the first passed</th><th scope="col">only the second</th><th scope="col">verdict</th></tr>
+          </thead>
+          <tbody>
+            {
+              models.flatMap((m) =>
+                m.comparisons.map((c) => (
+                  <tr>
+                    <td class="mono">{m.model}</td>
+                    <td class="mono">{armLabel[c.a]} vs {armLabel[c.b]}</td>
+                    <td class="mono kind">{kindLabel[c.kind] ?? c.kind}</td>
+                    <td class="mono">{c.pairs}</td>
+                    <td class="mono">{c.aOnly}</td>
+                    <td class="mono">{c.bOnly}</td>
+                    <td class="mono"><span class={c.verdict.endsWith('better') ? 'k-ok' : 'k-un'}>{c.verdict}</span> · p {c.p}</td>
+                  </tr>
+                ))
+              )
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- 05 · what it shows -->
+  <section class="sec" id="takeaways">
+    <div class="wrap" style="display: flex; flex-direction: column; gap: 28px">
+      <div class="stack" style="max-width: 46em">
+        <p class="cap">[ 05 · what it shows, and what it doesn't ]</p>
+        <h2 class="h2">Both models checked the code.</h2>
+      </div>
+      <div class="prose">
+        <ul>
+          <li>
+            The out-of-date notes rarely misled anyone. With <code>CLAUDE.md</code>, they cost {outdatedMisled} of {outdatedClaudeMd}
+            sessions: one free-shipping answer from {haiku.model}. Both models read the code before they wrote a number, so
+            memprove's stale marks had almost nothing left to correct. We expected the cheaper model to trust its notes more; it
+            did not.
+          </li>
+          <li>
+            Memory pays off for what no file holds: the port ops allocated and the new staging host. Either kind of memory passed
+            those every time, no memory never. A plain <code>CLAUDE.md</code> did this as well as memprove.
+          </li>
+          <li>
+            memprove's Pack is longer than the six lines of <code>CLAUDE.md</code>, and a session with it cost {pct(opusCost.mp, opusCost.md)} %
+            more with {opus.model}. With {haiku.model} both arms cost under a cent.
+          </li>
+          <li>
+            Not shown here: one small repository made up for the benchmark, eight tasks, one client. Every out-of-date note
+            could be settled by reading the code. Not measured: notes the code cannot settle, work handed from one agent to the
+            next, and the other parts of memprove {memproveVersion}, <code>memprove verify</code> and <code>memprove policy</code>.
+          </li>
+          <li>
+            The first round (2026-11-17: one model, four tasks) came out the same way.
+          </li>
+        </ul>
+        <p>
+          So we no longer say that memprove's memory makes an agent pass more tasks than a plain <code>CLAUDE.md</code>. What it adds
+          is a record of which notes a test run still backs, read by a fixed rule; on these tasks, that did not change the outcome.
+        </p>
+        <p class="note">
+          One session's cost is undercounted: in round 3, {haiku.model} with memprove on refund-rounding ended its work in a
+          background task, and Claude Code's final report counts only its last turn. It passed either way; memprove's mean cost
+          for {haiku.model} is a little higher than shown. The fix belongs in <code>memprove eval</code>.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 06 · run it -->
+  <section class="sec" id="run">
+    <div class="wrap" style="display: flex; flex-direction: column; gap: 28px">
+      <div class="stack" style="max-width: 46em">
+        <p class="cap">[ 06 · run it yourself ]</p>
+        <h2 class="h2">The kit is the one that ran.</h2>
+      </div>
+      <div class="prose">
+        <p>
+          <a href={kitUrl}>bench/m3-v2/kit</a> builds the repository with the same commit IDs on any machine, writes the tasks and
+          their hidden tests, and runs the three arms with <code>memprove eval</code>. It needs macOS on Apple silicon or Linux
+          x86_64, a logged-in <code>claude</code>, <code>python3</code>, <code>git</code> and <code>curl</code>. Every command runs
+          under <code>env -i</code> with a throwaway memprove installation; your <code>~/.memprove</code> and your Claude Code
+          settings are not read.
+        </p>
+        <CodeTerm title="bench/m3-v2/kit" code={runCommands} copy="copy" label="The kit's steps" />
+        <p>
+          Our run cost {spent} at API prices and took 50 minutes. The files the collect step wrote are in
+          <a href={resultsUrl}>bench/m3-v2/results</a>: the results, the versions, the Pack and the repository's commits.
+        </p>
+      </div>
+    </div>
+  </section>
+</Site>
+
+<style>
+  .lines.sum {
+    grid-template-columns: 28px minmax(0, 1fr);
+    row-gap: 12px;
+    font-family: var(--mp-font-serif);
+    font-size: 16px;
+    line-height: 1.5;
+    color: var(--mp-body);
+  }
+  .sum b {
+    font-weight: 600;
+    color: var(--mp-fg);
+  }
+  .sum .num {
+    font-family: var(--mp-font-mono);
+    font-size: 13px;
+    padding-top: 3px;
+  }
+  .lines.file {
+    font-size: 13px;
+    line-height: 1.7;
+  }
+  .bt {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 15px;
+  }
+  .bt.wide {
+    min-width: 760px;
+  }
+  .bt th {
+    text-align: left;
+    padding: 10px 14px;
+    font-weight: 400;
+    border-bottom: 1px solid var(--mp-line);
+    font-family: var(--mp-font-mono);
+    font-size: 12px;
+    color: var(--mp-muted);
+    white-space: nowrap;
+  }
+  .bt td {
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--mp-line);
+    vertical-align: top;
+    font-family: var(--mp-font-serif);
+    color: var(--mp-body);
+  }
+  .bt td.mono {
+    font-family: var(--mp-font-mono);
+    font-size: 13.5px;
+    color: var(--mp-fg);
+    white-space: nowrap;
+  }
+  .bt td.kind {
+    color: var(--mp-muted);
+  }
+  .bt tr:last-child td {
+    border-bottom: 0;
+  }
+  .res {
+    min-width: 420px;
+  }
+  .res tr.tot td {
+    font-family: var(--mp-font-mono);
+    font-size: 12.5px;
+    color: var(--mp-muted);
+  }
+  .res tr.tot td.mono {
+    color: var(--mp-fg);
+  }
+  .bt td.k-st {
+    color: var(--mp-stale);
+  }
+  .bt td.k-bad {
+    color: var(--mp-bad);
+  }
+  .bt .k-ok {
+    color: var(--mp-ok);
+  }
+  .bt .k-un {
+    color: var(--mp-unc);
+  }
+  /* On a phone the pass tables fit without scrolling; the wide tables scroll inside their panel. */
+  @media (max-width: 640px) {
+    .res {
+      min-width: 0;
+    }
+    .res th,
+    .res td {
+      padding: 10px 6px;
+    }
+    .res th:first-child,
+    .res td:first-child {
+      padding-left: 12px;
+    }
+    .res td.mono {
+      font-size: 12.5px;
+    }
+  }
+  .prose .note {
+    font-size: 16px;
+    color: var(--mp-muted);
+    border-left: 2px solid var(--mp-line-2);
+    padding-left: 14px;
+  }
+</style>
