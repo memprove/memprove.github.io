@@ -19,6 +19,7 @@ const required = [
   'about/index.html',
   'roadmap/index.html',
   'benchmark/index.html',
+  'zh/benchmark/index.html',
   'zh/index.html',
   'tune/index.html',
   'zh/tune/index.html',

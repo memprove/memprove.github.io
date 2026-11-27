@@ -1,0 +1,383 @@
+---
+// The memory benchmark M3 v2 in Simplified Chinese: /benchmark/ section by section. The numbers, figures and
+// tables come from the same files (src/lib/bench.ts); file contents, task names and model names stay as written.
+import Site from '../../../layouts/Site.astro';
+import CodeTerm from '../../../components/CodeTerm.astro';
+import '../../../styles/bench.css';
+import {
+  models,
+  trials,
+  spent,
+  claudeCode,
+  memproveVersion,
+  memproveCommit,
+  platform,
+  trialCap,
+  runCap,
+  tasks,
+  claudeMdLines,
+  packClaims,
+  packRerun,
+  commits,
+  kitUrl,
+  resultsUrl,
+  resultsMdUrl,
+  packUrl,
+  sessionsUrl,
+  undercounted,
+  type Cell,
+} from '../../../lib/bench';
+
+const byModel = (id: string) => {
+  const m = models.find((x) => x.model === id);
+  if (!m) throw new Error(`results.md has no section for ${id}`);
+  return m;
+};
+const opus = byModel('claude-opus-5-5');
+const haiku = byModel('claude-haiku-5-5');
+const arm = (m: (typeof models)[number], name: string) => m.arms.indexOf(name);
+const kind = (m: (typeof models)[number], k: string, a: string) => m.kinds.find((x) => x.kind === k)!.cells[arm(m, a)];
+const cmp = (m: (typeof models)[number], a: string, b: string) => m.comparisons.find((c) => c.a === a && c.b === b)!;
+const frac = (c: Cell) => `${c.of} 次中的 ${c.passed} 次`;
+const pct = (a: string, b: string) => Math.round((Number(a) / Number(b) - 1) * 100);
+
+// The sentences below quote these numbers; the build fails if results.md says something else.
+const mainOpus = cmp(opus, 'memprove', 'claude-md');
+const mainHaiku = cmp(haiku, 'memprove', 'claude-md');
+const memOpus = cmp(opus, 'claude-md', 'none');
+const outdatedMisled = models.reduce((n, m) => n + (kind(m, 'memory-outdated', 'claude-md').of - kind(m, 'memory-outdated', 'claude-md').passed), 0);
+const outdatedClaudeMd = models.reduce((n, m) => n + kind(m, 'memory-outdated', 'claude-md').of, 0);
+const opusCost = { md: opus.cost[arm(opus, 'claude-md')], mp: opus.cost[arm(opus, 'memprove')] };
+const haikuCost = { md: haiku.cost[arm(haiku, 'claude-md')], mp: haiku.cost[arm(haiku, 'memprove')] };
+if (mainOpus.verdict !== 'no difference shown' || mainHaiku.verdict !== 'no difference shown')
+  throw new Error('the page says memprove and CLAUDE.md showed no difference; results.md disagrees');
+for (const m of models)
+  for (const a of ['claude-md', 'memprove'])
+    if (cmp(m, a, 'none').verdict !== `${a} better`) throw new Error(`the page says ${a} beat none for ${m.model}; results.md disagrees`);
+if (outdatedMisled !== 1) throw new Error('the page says the out-of-date notes misled one session');
+
+const code = (s: string) =>
+  s
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/`([^`]+)`/g, '<span class="code">$1</span>');
+
+const kindLabel: Record<string, string> = {
+  'needs-memory': '需要笔记',
+  'memory-outdated': '笔记过时',
+  control: '对照',
+};
+const armLabel: Record<string, string> = { none: 'none', 'claude-md': 'CLAUDE.md', memprove: 'memprove' };
+const verdictLabel = (v: string) =>
+  v === 'no difference shown' ? '未显示差别' : v.endsWith(' better') ? `${armLabel[v.replace(/ better$/, '')] ?? v} 更好` : v;
+const outcomeLabel: Record<string, string> = { passed: '通过', failed: '未通过' };
+
+// The kit README's task table, translated. The task names and the kinds are checked against it.
+const taskZh: Record<string, { notes: string; code: string }> = {
+  port: { notes: '运维分配的端口是 7431', code: '8000（仓库里没有任何地方提到 7431）' },
+  'staging-url': { notes: '预发环境是 staging-2；`docs/DEPLOY.md` 已经过时', code: '`docs/DEPLOY.md` 写的是 staging-1' },
+  'ratelimit-docs': { notes: '每分钟 100 次请求', code: '自 c5 起为 60' },
+  'free-shipping-faq': { notes: '满 €50 包邮', code: '自 c6 起满 €75 包邮' },
+  'refund-rounding': { notes: '面向客户的金额四舍五入（半数进位）', code: '自 c8 起退款向下取整（`money.refund_cents`）' },
+  'partners-doc': { notes: '每分钟 100 次请求（顺带提到）', code: '60' },
+  discount: { notes: '半数进位', code: '半数进位' },
+  'zone-validation': { notes: '没有相关内容', code: '没有相关内容' },
+};
+for (const t of tasks) if (!taskZh[t.task]) throw new Error(`no Chinese text for the task ${t.task}`);
+
+const runCommands = [
+  `./run_bench.sh setup      # memprove ${memproveVersion}、仓库、任务`,
+  './run_bench.sh rehearse   # 脚本化的 agent，不调用模型：必须打印 "rehearsal PASS"',
+  './run_bench.sh probe      # 两次便宜的会话：不能出现用户级的 CLAUDE.md',
+  './run_bench.sh start 5    # 五轮，在后台运行',
+  './run_bench.sh wait       # 重复执行，直到打印 "ended with exit"',
+  './run_bench.sh collect    # results.md、results.json 和原始运行记录',
+].join('\n');
+
+const c2 = commits.find((c) => c.subject.startsWith('add per-key rate limiting'));
+const main = commits[commits.length - 1];
+---
+
+<Site
+  title="memprove 基准测试（中文）"
+  description={`在一个小仓库上跑了 ${trials} 次 Claude Code：memprove 的记忆，对比把同样的笔记写进 CLAUDE.md，以及不给笔记。跑分套件、事先写定的判读规则和全部结果。`}
+  current="benchmark"
+  lang="zh-CN"
+  alternates={[
+    { hreflang: 'en', href: 'https://memprove.dev/benchmark/' },
+    { hreflang: 'x-default', href: 'https://memprove.dev/benchmark/' },
+  ]}
+>
+  <!-- hero -->
+  <section class="page zh">
+    <div class="wrap two top">
+      <div class="stack" style="gap: 22px">
+        <p class="cap">[ 基准测试 · m3 v2 · 2026-11-26 运行 · memprove {memproveVersion} ]</p>
+        <h1 class="h2">和只写 CLAUDE.md 相比，memprove 在这些任务上没有带来差别。</h1>
+        <p class="lead">
+          我们让 Claude Code 在一个笔记已经过时的小仓库上跑了 {trials} 次。用 memprove 的记忆时，agent 通过的任务和把同样的笔记写进
+          <span class="code">CLAUDE.md</span> 时一样多。两种记忆任用一种，需要笔记的任务全部通过；不给笔记，这些任务一个也没有通过。memprove
+          的花费略高一些。
+        </p>
+        <p class="txt sm" style="color: var(--mp-muted)">
+          判读结果的规则在运行之前就写定了，由收集结果的脚本执行。我们事先说过，不管结果如何都会公开。这就是结果。
+        </p>
+      </div>
+      <figure class="panel" style="margin: 0" aria-labelledby="sum-cap">
+        <div class="phead"><span id="sum-cap">[ 图 1 — 结果 ]</span><span>{trials} 次会话 · {spent}</span></div>
+        <div class="lines sum">
+          <span class="num">01</span>
+          <span><b>memprove 对比 CLAUDE.md</b>，笔记过时的任务：<span class="k-un">未显示差别</span>。{opus.model}：{mainOpus.pairs} 对里 {mainOpus.aOnly} 比 {mainOpus.bOnly}。{haiku.model}：{mainHaiku.aOnly} 比 {mainHaiku.bOnly}，p {mainHaiku.p}。</span>
+          <span class="num">02</span>
+          <span><b>任一种记忆对比不给记忆</b>，只有笔记里才有的信息：<span class="k-ok">记忆更好</span>，每个模型、每种记忆都是 {memOpus.aOnly} 比 {memOpus.bOnly}，p {memOpus.p}。</span>
+          <span class="num">03</span>
+          <span><b>对照任务</b>：每个组在两个模型上都通过了 {frac(kind(opus, 'control', 'none'))}。</span>
+          <span class="num">04</span>
+          <span><b>每次会话的花费</b>，memprove 对比 CLAUDE.md：${opusCost.mp} 对 ${opusCost.md}（{opus.model}，多 {pct(opusCost.mp, opusCost.md)}%）；${haikuCost.mp} 对 ${haikuCost.md}（{haiku.model}）。</span>
+        </div>
+        <div class="pfoot">数字取自 <a href={resultsMdUrl}>results.md</a>，即跑分套件的 collect 步骤写出的原文件。花费是 Claude Code 自己的计数，按 API 价格计算。</div>
+      </figure>
+    </div>
+  </section>
+
+  <!-- 01 · setup -->
+  <section class="sec zh" id="setup">
+    <div class="wrap" style="display: flex; flex-direction: column; gap: 32px">
+      <div class="stack" style="max-width: 46em">
+        <p class="cap">[ 01 · 设置 ]</p>
+        <h2 class="h2">六条笔记，写在一个旧提交上。</h2>
+        <p class="txt">
+          parcelpost 是为这次测试编出来的一个小型 Python 服务：按重量和区域报运费，带测试。在提交 c2（<span class="mono">{c2?.id}</span>，{c2?.date}）时，一个
+          agent 把六条笔记写进了 <span class="code">CLAUDE.md</span>，同样的六条也记进了 memprove：三条绑定到一次通过的测试运行的事实，两条测试无法检查的决定，以及测试命令。之后代码继续变化：限流从每分钟
+          100 次降到 60 次，满额包邮从 €50 提到 €75，退款改为向下取整。每次会话都从 main（<span class="mono">{main.id}</span>，{main.date}）开始。
+        </p>
+      </div>
+      <div class="two top">
+        <figure class="panel" style="margin: 0" aria-labelledby="fig2-cap">
+          <div class="phead"><span id="fig2-cap">[ 图 2 — c2 时写下的 CLAUDE.md ]</span><span>claude-md 组</span></div>
+          <div class="lines file" lang="en">
+            {claudeMdLines.map((l, i) => (<><span class="num">{String(i + 1).padStart(2, '0')}</span><span set:html={code(l) || ' '} /></>))}
+          </div>
+        </figure>
+        <figure class="panel" style="margin: 0" aria-labelledby="fig3-cap">
+          <div class="phead"><span id="fig3-cap">[ 图 3 — memprove 在 main 上给出的 Pack，其中的条目 ]</span><span>memprove 组</span></div>
+          <div class="lines file" lang="en">
+            {
+              packClaims.map((c) => (
+                <>
+                  <span class="num">#{c.n}</span>
+                  <span>
+                    <span class={c.kind === 'fact stale' ? 'k-st' : 'k-un'}>{c.kind === 'fact stale' ? '▨ stale' : c.kind}</span> {c.text}
+                  </span>
+                </>
+              ))
+            }
+          </div>
+          <div class="pfoot"><span lang="en" set:html={code(packRerun)} /> <a href={packUrl}>完整的 Pack →</a></div>
+        </figure>
+      </div>
+      <div class="panel scroll-x">
+        <table class="bt">
+          <thead>
+            <tr><th scope="col">组</th><th scope="col">agent 开始时拿到什么</th></tr>
+          </thead>
+          <tbody>
+            <tr><td class="mono">none</td><td>main，没有 <span class="code">CLAUDE.md</span>，也没有记忆</td></tr>
+            <tr><td class="mono">claude-md</td><td>main，带着 c2 时写的 <span class="code">CLAUDE.md</span>（图 2）</td></tr>
+            <tr><td class="mono">memprove</td><td>main，没有 <span class="code">CLAUDE.md</span>；提示词前面加上 memprove 的 Context Pack（图 3）</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- 02 · tasks -->
+  <section class="sec zh" id="tasks">
+    <div class="wrap" style="display: flex; flex-direction: column; gap: 28px">
+      <div class="stack" style="max-width: 46em">
+        <p class="cap">[ 02 · 任务 ]</p>
+        <h2 class="h2">八个任务，由隐藏的测试判定。</h2>
+        <p class="txt">
+          两个任务需要仓库里任何文件都没有的信息，四个任务涉及一条已经过时的笔记，两个是对照。提示词从不提到笔记；由 agent 看不到的测试判断做得对不对。
+        </p>
+      </div>
+      <div class="panel scroll-x">
+        <table class="bt wide">
+          <thead>
+            <tr><th scope="col">任务</th><th scope="col">类型</th><th scope="col">笔记里写的（c2）</th><th scope="col">代码里实际的（main）</th></tr>
+          </thead>
+          <tbody>
+            {
+              tasks.map((t) => (
+                <tr>
+                  <td class="mono">{t.task}</td>
+                  <td class="kind">{kindLabel[t.kind] ?? t.kind}</td>
+                  <td set:html={code(taskZh[t.task].notes)} />
+                  <td set:html={code(taskZh[t.task].code)} />
+                </tr>
+              ))
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- 03 · results -->
+  <section class="sec zh" id="results">
+    <div class="wrap" style="display: flex; flex-direction: column; gap: 28px">
+      <div class="stack" style="max-width: 46em">
+        <p class="cap">[ 03 · 结果 ]</p>
+        <h2 class="h2">五轮里通过了几次。</h2>
+        <p class="txt">
+          五轮、两个模型、三个组、八个任务：共 {trials} 次会话，总花费 {spent}。单次会话花到 {trialCap} 时 Claude Code 会停下；可能让总花费超过
+          {runCap} 的那一轮，套件不会开始。
+        </p>
+      </div>
+      <div class="two top">
+        {
+          models.map((m) => (
+            <figure class="panel" style="margin: 0">
+              <div class="phead"><span>[ {m.model} ]</span><span>通过 / 会话</span></div>
+              <div class="scroll-x">
+                <table class="bt res">
+                  <thead>
+                    <tr><th scope="col">任务</th>{m.arms.map((a) => <th scope="col">{armLabel[a] ?? a}</th>)}</tr>
+                  </thead>
+                  <tbody>
+                    {m.tasks.map((t) => (
+                      <tr>
+                        <td class="mono">{t.task}</td>
+                        {t.cells.map((c) => (
+                          <td class={`mono ${c.passed === c.of ? '' : c.passed === 0 ? 'k-bad' : 'k-st'}`}>{c.passed}/{c.of}</td>
+                        ))}
+                      </tr>
+                    ))}
+                    {m.kinds.map((k) => (
+                      <tr class="tot">
+                        <td>合计：{kindLabel[k.kind] ?? k.kind}</td>
+                        {k.cells.map((c) => <td class="mono">{c.passed}/{c.of}</td>)}
+                      </tr>
+                    ))}
+                    <tr class="tot">
+                      <td>每次会话花费（USD）</td>
+                      {m.cost.map((c) => <td class="mono">{c}</td>)}
+                    </tr>
+                    <tr class="tot">
+                      <td>每次会话轮数</td>
+                      {m.turns.map((c) => <td class="mono">{c}</td>)}
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </figure>
+          ))
+        }
+      </div>
+      <p class="cap" style="font-size: 12px">
+        Claude Code {claudeCode}，memprove {memproveVersion}（{memproveCommit}），{platform}，同时跑两个会话。平均值的取舍和 results.md 相同。
+      </p>
+    </div>
+  </section>
+
+  <!-- 04 · reading -->
+  <section class="sec zh" id="reading">
+    <div class="wrap" style="display: flex; flex-direction: column; gap: 28px">
+      <div class="stack" style="max-width: 46em">
+        <p class="cap">[ 04 · 判读 ]</p>
+        <h2 class="h2">规则在运行之前就定好了。</h2>
+        <p class="txt">
+          每一轮里的每个任务构成一对会话，两个组各一次。只有恰好一组通过的那些对才计数，用单侧精确符号检验判定：p &lt; 0.05
+          记为"更好"，否则记为"未显示差别"。主要问题是 memprove 和 <span class="code">CLAUDE.md</span> 在四个笔记过时任务上的对比；memprove
+          要胜出，至少需要比如 5 胜 0 负。
+        </p>
+      </div>
+      <div class="panel scroll-x">
+        <table class="bt wide">
+          <thead>
+            <tr><th scope="col">模型</th><th scope="col">对比</th><th scope="col">任务</th><th scope="col">对数</th><th scope="col">只有前者通过</th><th scope="col">只有后者通过</th><th scope="col">结论</th></tr>
+          </thead>
+          <tbody>
+            {
+              models.flatMap((m) =>
+                m.comparisons.map((c) => (
+                  <tr>
+                    <td class="mono">{m.model}</td>
+                    <td class="mono">{armLabel[c.a]} vs {armLabel[c.b]}</td>
+                    <td class="kind">{kindLabel[c.kind] ?? c.kind}</td>
+                    <td class="mono">{c.pairs}</td>
+                    <td class="mono">{c.aOnly}</td>
+                    <td class="mono">{c.bOnly}</td>
+                    <td class="mono"><span class={c.verdict.endsWith('better') ? 'k-ok' : 'k-un'}>{verdictLabel(c.verdict)}</span> · p {c.p}</td>
+                  </tr>
+                ))
+              )
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- 05 · what it shows -->
+  <section class="sec zh" id="takeaways">
+    <div class="wrap" style="display: flex; flex-direction: column; gap: 28px">
+      <div class="stack" style="max-width: 46em">
+        <p class="cap">[ 05 · 说明了什么，没说明什么 ]</p>
+        <h2 class="h2">两个模型都去查了代码。</h2>
+      </div>
+      <div class="prose">
+        <ul>
+          <li>
+            过时的笔记几乎没有误导谁。带着 <code>CLAUDE.md</code> 的 {outdatedClaudeMd} 次会话里，只有 {outdatedMisled} 次答错：{haiku.model}
+            回答包邮门槛的那一次。两个模型都会先读代码再写数字，所以 memprove 的 stale 标记几乎没有东西可纠正。我们原以为更便宜的模型会更相信笔记，结果并没有。
+          </li>
+          <li>
+            记忆的价值在于文件里没有的信息：运维分配的端口和新的预发主机。两种记忆每次都通过，不给记忆一次也没通过。只写 <code>CLAUDE.md</code> 和 memprove
+            做得一样好。
+          </li>
+          <li>
+            memprove 的 Pack 比 <code>CLAUDE.md</code> 的六行长，用 {opus.model} 时每次会话贵 {pct(opusCost.mp, opusCost.md)}%。用 {haiku.model}
+            时，两组每次会话都不到一美分。
+          </li>
+          <li>
+            这里没有说明的：只有一个为测试编出来的小仓库、八个任务、一个客户端，每条过时的笔记都能靠读代码核实。没有测到的：代码无法核实的笔记、在多个 agent
+            之间交接的工作，以及 memprove {memproveVersion} 的另外两部分，<code>memprove verify</code> 和 <code>memprove policy</code>。
+          </li>
+          <li>第一轮（2026-11-17：一个模型、四个任务）结论相同。</li>
+        </ul>
+        <p>
+          所以我们不再说 memprove 的记忆能让 agent 比只写 <code>CLAUDE.md</code> 多通过任务。它多提供的是一份记录：哪些笔记仍有测试运行支撑，由固定规则判定；在这些任务上，这一点没有改变结果。
+        </p>
+        <p class="note">
+          有一次会话的花费少算了：第 {undercounted.round} 轮，{undercounted.model} 在 {undercounted.arm} 组做 {undercounted.task}，工作了
+          {undercounted.seconds} 秒，最后在一个后台任务里结束，而 Claude Code 最终的报告只计入了最后一轮。这次会话照样{outcomeLabel[undercounted.outcome] ?? undercounted.outcome}；该组的平均花费实际比表里略高。这个问题应该在
+          <code>memprove eval</code> 里修。
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 06 · run it -->
+  <section class="sec zh" id="run">
+    <div class="wrap" style="display: flex; flex-direction: column; gap: 28px">
+      <div class="stack" style="max-width: 46em">
+        <p class="cap">[ 06 · 自己跑一遍 ]</p>
+        <h2 class="h2">套件就是当时跑的那一份。</h2>
+      </div>
+      <div class="prose">
+        <p>
+          <a href={kitUrl}>bench/m3-v2/kit</a> 在任何机器上都能以相同的提交号构建出这个仓库，写出任务和隐藏测试，再用 <code>memprove eval</code>
+          跑三个组。需要 Apple 芯片的 macOS 或 Linux x86_64、已登录的 <code>claude</code>，以及 <code>python3</code>、<code>git</code>、<code>curl</code>。每条命令都在
+          <code>env -i</code> 下用一个临时的 memprove 安装运行，不会读你的 <code>~/.memprove</code> 和 Claude Code 设置。
+        </p>
+        <CodeTerm title="bench/m3-v2/kit" code={runCommands} copy="复制" label="跑分套件的步骤" />
+        <p>
+          我们这次按 API 价格花了 {spent}，用时 50 分钟。collect 步骤写出的文件在 <a href={resultsUrl}>bench/m3-v2/results</a>：结果、版本、Pack、仓库的提交记录，以及
+          <a href={sessionsUrl}>results.json</a>，即每次会话的记录：结果、花费、轮数、diff 和最后一条消息。本页的每个数字在构建时都会和这两份文件核对。
+        </p>
+        <p lang="en"><a href="/benchmark/" hreflang="en">English version →</a></p>
+      </div>
+    </div>
+  </section>
+</Site>

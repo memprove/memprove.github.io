@@ -1,0 +1,121 @@
+/* The benchmark pages, /benchmark/ and /zh/benchmark/: the result panel, the figures and the tables. */
+.lines.sum {
+  grid-template-columns: 28px minmax(0, 1fr);
+  row-gap: 12px;
+  font-family: var(--mp-font-serif);
+  font-size: 16px;
+  line-height: 1.5;
+  color: var(--mp-body);
+}
+.sum b {
+  font-weight: 600;
+  color: var(--mp-fg);
+}
+.sum .num {
+  font-family: var(--mp-font-mono);
+  font-size: 13px;
+  padding-top: 3px;
+}
+.lines.file {
+  font-size: 13px;
+  line-height: 1.7;
+}
+.bt {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 15px;
+}
+.bt.wide {
+  min-width: 760px;
+}
+.bt th {
+  text-align: left;
+  padding: 10px 14px;
+  font-weight: 400;
+  border-bottom: 1px solid var(--mp-line);
+  font-family: var(--mp-font-mono);
+  font-size: 12px;
+  color: var(--mp-muted);
+  white-space: nowrap;
+}
+.bt td {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--mp-line);
+  vertical-align: top;
+  font-family: var(--mp-font-serif);
+  color: var(--mp-body);
+}
+.bt td.mono {
+  font-family: var(--mp-font-mono);
+  font-size: 13.5px;
+  color: var(--mp-fg);
+  white-space: nowrap;
+}
+.bt td.kind {
+  color: var(--mp-muted);
+}
+.bt tr:last-child td {
+  border-bottom: 0;
+}
+.res {
+  min-width: 420px;
+}
+.res tr.tot td {
+  font-family: var(--mp-font-mono);
+  font-size: 12.5px;
+  color: var(--mp-muted);
+}
+.res tr.tot td.mono {
+  color: var(--mp-fg);
+}
+.bt td.k-st {
+  color: var(--mp-stale);
+}
+.bt td.k-bad {
+  color: var(--mp-bad);
+}
+.bt .k-ok {
+  color: var(--mp-ok);
+}
+.bt .k-un {
+  color: var(--mp-unc);
+}
+/* On a phone the pass tables fit without scrolling; the wide tables scroll inside their panel. */
+@media (max-width: 640px) {
+  .res {
+    min-width: 0;
+  }
+  .res th,
+  .res td {
+    padding: 10px 6px;
+  }
+  .res th:first-child,
+  .res td:first-child {
+    padding-left: 12px;
+  }
+  .res td.mono {
+    font-size: 12.5px;
+  }
+}
+.prose .note {
+  font-size: 16px;
+  color: var(--mp-muted);
+  border-left: 2px solid var(--mp-line-2);
+  padding-left: 14px;
+}
+
+/* The Chinese page: system CJK fonts for running text, as on the other Chinese pages. */
+.zh .lead,
+.zh .txt,
+.zh .lines.sum,
+.zh .bt td:not(.mono),
+.zh .pfoot {
+  font-family: var(--mp-font-cjk);
+}
+.zh .lead,
+.zh .txt {
+  line-height: 1.8;
+}
+.zh .h2 {
+  text-wrap: balance;
+}
