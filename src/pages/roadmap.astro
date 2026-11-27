@@ -22,7 +22,8 @@ import { release } from '../lib/site';
           helps it. New in 0.3.0: <code>memprove verify</code> checks that work an agent says is done is done,
           <code>memprove policy</code> gives the three clients one set of tool rules, with a scan for secrets,
           <code>memprove report</code> shows what one session cost and did, and <code>memprove import</code> reads the instruction
-          files a repository already has. The ledger format, the control API and the Pack's line set are stable.
+          files a repository already has. 0.3.1 fixes TRAE's MCP server, which found no Workspace in TRAE itself. The ledger
+          format, the control API and the Pack's line set are stable.
           <a href="/changelog/">The changelog</a> has the details.
         </p>
 
@@ -33,7 +34,7 @@ import { release } from '../lib/site';
           <li>The repository state covers tracked files, the index, HEAD and the branch. Ignored files and environment variables are not part of it.</li>
           <li>The macOS binaries are not notarized.</li>
           <li>On <a href="/benchmark/">the memory benchmark</a> (2026-11-26), memprove's memory did no better than the same notes in a plain <code>CLAUDE.md</code>, and a session with it cost about 10 % more. Tasks where the code cannot settle a note are not measured yet.</li>
-          <li>The hooks are tested against each client's documented hook input. In a real client, only the policy hook in Codex has been run; the session-start hooks in Codex and Cursor, Cursor's policy hook and everything for TRAE have not.</li>
+          <li>The hooks are tested against each client's documented hook input. In a real client, the policy hook in Codex and the session-start hook and MCP server in TRAE (3.6.24 on macOS) have been run; the session-start hooks in Codex and Cursor, Cursor's policy hook, and TRAE CN have not.</li>
         </ul>
 
         <h2>Next on memprove.dev</h2>
