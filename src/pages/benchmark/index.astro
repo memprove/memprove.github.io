@@ -3,6 +3,7 @@
 // against none. The results and figures are read at build time from bench/m3-v2/ (src/lib/bench.ts).
 import Site from '../../layouts/Site.astro';
 import CodeTerm from '../../components/CodeTerm.astro';
+import '../../styles/bench.css';
 import {
   models,
   trials,
@@ -22,6 +23,8 @@ import {
   resultsUrl,
   resultsMdUrl,
   packUrl,
+  sessionsUrl,
+  undercounted,
   type Cell,
 } from '../../lib/bench';
 
@@ -82,6 +85,10 @@ const main = commits[commits.length - 1];
   title="Benchmark · memprove"
   description={`${trials} Claude Code sessions on one small repository: memprove's memory against the same notes in a plain CLAUDE.md, and against no notes. The kit, the rules fixed before the run, and every result.`}
   current="benchmark"
+  alternates={[
+    { hreflang: 'zh-CN', href: 'https://memprove.dev/zh/benchmark/' },
+    { hreflang: 'x-default', href: 'https://memprove.dev/benchmark/' },
+  ]}
 >
   <!-- hero -->
   <section class="page">
@@ -337,9 +344,10 @@ const main = commits[commits.length - 1];
           is a record of which notes a test run still backs, read by a fixed rule; on these tasks, that did not change the outcome.
         </p>
         <p class="note">
-          One session's cost is undercounted: in round 3, {haiku.model} with memprove on refund-rounding ended its work in a
-          background task, and Claude Code's final report counts only its last turn. It passed either way; memprove's mean cost
-          for {haiku.model} is a little higher than shown. The fix belongs in <code>memprove eval</code>.
+          One session's cost is undercounted: in round {undercounted.round}, {undercounted.model} with {undercounted.arm} on
+          {undercounted.task} worked for {undercounted.seconds} seconds and ended in a background task, and Claude Code's final
+          report counts only its last turn. It {undercounted.outcome} either way; the mean cost of that arm is a little higher than
+          shown. The fix belongs in <code>memprove eval</code>.
         </p>
       </div>
     </div>
@@ -363,116 +371,12 @@ const main = commits[commits.length - 1];
         <CodeTerm title="bench/m3-v2/kit" code={runCommands} copy="copy" label="The kit's steps" />
         <p>
           Our run cost {spent} at API prices and took 50 minutes. The files the collect step wrote are in
-          <a href={resultsUrl}>bench/m3-v2/results</a>: the results, the versions, the Pack and the repository's commits.
+          <a href={resultsUrl}>bench/m3-v2/results</a>: the results, the versions, the Pack and the repository's commits, and
+          <a href={sessionsUrl}>results.json</a>, the record of every session: its outcome, cost, turns, diff and final message.
+          The build checks every number on this page against both.
         </p>
+        <p lang="zh-CN"><a href="/zh/benchmark/" hreflang="zh-CN">中文版 →</a></p>
       </div>
     </div>
   </section>
 </Site>
-
-<style>
-  .lines.sum {
-    grid-template-columns: 28px minmax(0, 1fr);
-    row-gap: 12px;
-    font-family: var(--mp-font-serif);
-    font-size: 16px;
-    line-height: 1.5;
-    color: var(--mp-body);
-  }
-  .sum b {
-    font-weight: 600;
-    color: var(--mp-fg);
-  }
-  .sum .num {
-    font-family: var(--mp-font-mono);
-    font-size: 13px;
-    padding-top: 3px;
-  }
-  .lines.file {
-    font-size: 13px;
-    line-height: 1.7;
-  }
-  .bt {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 15px;
-  }
-  .bt.wide {
-    min-width: 760px;
-  }
-  .bt th {
-    text-align: left;
-    padding: 10px 14px;
-    font-weight: 400;
-    border-bottom: 1px solid var(--mp-line);
-    font-family: var(--mp-font-mono);
-    font-size: 12px;
-    color: var(--mp-muted);
-    white-space: nowrap;
-  }
-  .bt td {
-    padding: 12px 14px;
-    border-bottom: 1px solid var(--mp-line);
-    vertical-align: top;
-    font-family: var(--mp-font-serif);
-    color: var(--mp-body);
-  }
-  .bt td.mono {
-    font-family: var(--mp-font-mono);
-    font-size: 13.5px;
-    color: var(--mp-fg);
-    white-space: nowrap;
-  }
-  .bt td.kind {
-    color: var(--mp-muted);
-  }
-  .bt tr:last-child td {
-    border-bottom: 0;
-  }
-  .res {
-    min-width: 420px;
-  }
-  .res tr.tot td {
-    font-family: var(--mp-font-mono);
-    font-size: 12.5px;
-    color: var(--mp-muted);
-  }
-  .res tr.tot td.mono {
-    color: var(--mp-fg);
-  }
-  .bt td.k-st {
-    color: var(--mp-stale);
-  }
-  .bt td.k-bad {
-    color: var(--mp-bad);
-  }
-  .bt .k-ok {
-    color: var(--mp-ok);
-  }
-  .bt .k-un {
-    color: var(--mp-unc);
-  }
-  /* On a phone the pass tables fit without scrolling; the wide tables scroll inside their panel. */
-  @media (max-width: 640px) {
-    .res {
-      min-width: 0;
-    }
-    .res th,
-    .res td {
-      padding: 10px 6px;
-    }
-    .res th:first-child,
-    .res td:first-child {
-      padding-left: 12px;
-    }
-    .res td.mono {
-      font-size: 12.5px;
-    }
-  }
-  .prose .note {
-    font-size: 16px;
-    color: var(--mp-muted);
-    border-left: 2px solid var(--mp-line-2);
-    padding-left: 14px;
-  }
-</style>

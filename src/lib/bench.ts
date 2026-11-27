@@ -1,7 +1,8 @@
 // The memory benchmark M3 v2 (2026-11-26). Everything /benchmark/ shows is read at build time
 // from bench/m3-v2/: the kit as it ran (kit/) and the files its collect step wrote (results/).
-// bench/README.md says where each file comes from; nothing here is typed by hand.
-const files = import.meta.glob<string>(['../../bench/m3-v2/results/*.{md,txt}', '../../bench/m3-v2/kit/{README.md,build_fixture.py}'], {
+// bench/README.md says where each file comes from; nothing here is typed by hand, and the build
+// fails if results.md and results.json, both written by the kit's collect step, disagree.
+const files = import.meta.glob<string>(['../../bench/m3-v2/results/*.{md,txt,json}', '../../bench/m3-v2/kit/{README.md,build_fixture.py}'], {
   query: '?raw',
   import: 'default',
   eager: true,
@@ -18,6 +19,7 @@ export const kitUrl = `${benchRepo}/tree/main/bench/m3-v2/kit`;
 export const resultsUrl = `${benchRepo}/tree/main/bench/m3-v2/results`;
 export const resultsMdUrl = `${benchRepo}/blob/main/bench/m3-v2/results/results.md`;
 export const packUrl = `${benchRepo}/blob/main/bench/m3-v2/results/pack-at-main.txt`;
+export const sessionsUrl = `${benchRepo}/blob/main/bench/m3-v2/results/results.json`;
 
 export type Cell = { passed: number; of: number };
 export type Comparison = { a: string; b: string; kind: string; pairs: number; aOnly: number; bOnly: number; verdict: string; p: string };
@@ -78,6 +80,44 @@ const total = resultsMd.match(/^Trials: (\d+); spent: ([\d.]+) USD/m);
 if (!total) throw new Error('results.md: no "Trials: …; spent: … USD" line');
 export const trials = Number(total[1]);
 export const spent = `$${total[2]}`;
+
+/** Every session as results.json records it (collect.py wrote results.md from the same records). */
+type Session = {
+  round: number;
+  model: string;
+  arm: string;
+  task: string;
+  outcome: string;
+  cost_usd: number;
+  turns: number | null;
+  agent_ms: number | null;
+};
+export const sessions: Session[] = JSON.parse(file('results/results.json')).trials;
+
+// results.md must say what results.json holds: every pass count, mean cost and mean turns, and the total.
+if (sessions.length !== trials) throw new Error(`results.json has ${sessions.length} sessions, results.md says ${trials}`);
+const sumOf = (xs: number[]) => xs.reduce((a, b) => a + b, 0);
+for (const m of models) {
+  m.arms.forEach((a, i) => {
+    const mine = sessions.filter((x) => x.model === m.model && x.arm === a);
+    for (const t of m.tasks) {
+      const s = mine.filter((x) => x.task === t.task);
+      const passed = s.filter((x) => x.outcome === 'passed').length;
+      if (s.length !== t.cells[i].of || passed !== t.cells[i].passed)
+        throw new Error(`${m.model} ${a} ${t.task}: results.md says ${t.cells[i].passed}/${t.cells[i].of}, results.json ${passed}/${s.length}`);
+    }
+    const cost = (sumOf(mine.map((x) => x.cost_usd)) / mine.length).toFixed(3);
+    const turns = (sumOf(mine.map((x) => x.turns ?? 0)) / mine.length).toFixed(1);
+    if (cost !== m.cost[i] || turns !== m.turns[i])
+      throw new Error(`${m.model} ${a}: results.md says ${m.cost[i]} USD and ${m.turns[i]} turns, results.json ${cost} and ${turns}`);
+  });
+}
+if (sumOf(sessions.map((x) => x.cost_usd)).toFixed(2) !== total[2]) throw new Error('results.json: the total cost differs from results.md');
+
+/** The one session whose usage Claude Code undercounted: one turn reported for minutes of work. */
+const short = sessions.filter((x) => x.turns === 1 && (x.agent_ms ?? 0) > 60_000);
+if (short.length !== 1) throw new Error(`results.json: expected one undercounted session, found ${short.length}`);
+export const undercounted = { ...short[0], seconds: Math.round((short[0].agent_ms ?? 0) / 1000) };
 
 /** versions.txt: Claude Code, memprove, Python, git, OS, then the run's settings. */
 const versions = file('results/versions.txt').trim().split('\n');

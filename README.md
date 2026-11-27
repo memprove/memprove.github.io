@@ -14,6 +14,7 @@ The website of [memprove](https://github.com/memprove/memprove): the homepage, t
 | `/docs/takeover-eval/` | memprove's `docs/takeover-eval.md` |
 | `/changelog/` | GitHub releases of memprove/memprove, then its `CHANGELOG.md` |
 | `/benchmark/` | `src/pages/benchmark/index.astro`; every result read from `bench/m3-v2/` (see `bench/README.md`) |
+| `/zh/benchmark/` | `src/pages/zh/benchmark/index.astro`: the same page in Simplified Chinese, from the same files; update it with `/benchmark/` |
 | `/llms.txt`, `/llms-full.txt` | `src/fragments/llms.md` with the page list; all pages in one file |
 | `/install.sh` | `public/install.sh`, the one-line installer (`curl -fsSL https://memprove.dev/install.sh \| sh`) |
 | every doc page as `.md` | the same Markdown, next to the page (`/docs/guide/the-context-pack.md`) |
